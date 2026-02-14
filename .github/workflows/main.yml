@@ -104,17 +104,14 @@ jobs:
             BASENAME=$(basename "$FILE")
             OUTFILE="$DEST/$BASENAME"
 
-            # Start with a clean file
-            echo "" > "$OUTFILE"
-
-            # Copy original content except RPC comments
-            grep -v "// RPC" "$FILE" >> "$OUTFILE"
-
             # Extract RPC lines
             RPC_LINES=$(grep "// RPC" "$FILE" || true)
 
+            # Start with a clean file
+            echo "" > "$OUTFILE"
+
+            # If RPCs exist, write service block at the top
             if [[ -n "$RPC_LINES" ]]; then
-              echo >> "$OUTFILE"
               echo "service RpcService {" >> "$OUTFILE"
 
               while read -r LINE; do
@@ -126,9 +123,12 @@ jobs:
               done <<< "$RPC_LINES"
 
               echo "}" >> "$OUTFILE"
+              echo >> "$OUTFILE"
             fi
-          done
 
+            # Append the original file (unchanged, including syntax + RPC comments)
+            cat "$FILE" >> "$OUTFILE"
+          done
 
       - name: Convert proto files to RPC-enabled versions (remotefortressreader)
         if: steps.check_proto_changes.outputs.changed == 'true'
@@ -142,15 +142,11 @@ jobs:
             BASENAME=$(basename "$FILE")
             OUTFILE="$DEST/$BASENAME"
 
-            # Start with a clean file
-            echo "" > "$OUTFILE"
-
-            grep -v "// RPC" "$FILE" >> "$OUTFILE"
-
             RPC_LINES=$(grep "// RPC" "$FILE" || true)
 
+            echo "" > "$OUTFILE"
+
             if [[ -n "$RPC_LINES" ]]; then
-              echo >> "$OUTFILE"
               echo "service RpcService {" >> "$OUTFILE"
 
               while read -r LINE; do
@@ -162,10 +158,11 @@ jobs:
               done <<< "$RPC_LINES"
 
               echo "}" >> "$OUTFILE"
+              echo >> "$OUTFILE"
             fi
+
+            cat "$FILE" >> "$OUTFILE"
           done
-
-
 
       ###############################################################
       # GENERATE C# FILES FROM ORIGINAL PROTO SOURCES
