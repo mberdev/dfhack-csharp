@@ -56,19 +56,24 @@ jobs:
         run: echo "Skipping C# generation because no rpcproto changes were detected."
 
       ###############################################################
-      # INSTALL PROTOC
+      # INSTALL PROTOC + gRPC C# PLUGIN
       ###############################################################
 
-      - name: Install protoc (pinned version)
+      - name: Install protoc and gRPC C# plugin
         run: |
           PROTOC_VERSION="27.2"
           curl -L -o protoc.zip \
             "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip"
           sudo apt-get update
-          sudo apt-get install -y unzip
+          sudo apt-get install -y unzip grpc-tools
           sudo unzip protoc.zip -d /usr/local
           rm protoc.zip
+
+          echo "protoc version:"
           protoc --version
+
+          echo "grpc_csharp_plugin path:"
+          which grpc_csharp_plugin
 
       ###############################################################
       # GENERATE C# FILES FOR ALL RPCPROTO FOLDERS
@@ -84,14 +89,16 @@ jobs:
 
             echo "Generating C# for:"
             echo "  Input proto folder: $RPCPROTO_PATH"
-            echo "  Output base:        $OUTBASE"
+            echo "  Output base:        $OUTBASE/Generated"
 
             rm -rf "$OUTBASE/Generated" || true
             mkdir -p "$OUTBASE/Generated"
 
             protoc \
-              --csharp_out="$OUTBASE/Generated" \
               --proto_path="$RPCPROTO_PATH" \
+              --csharp_out="$OUTBASE/Generated" \
+              --grpc_out="$OUTBASE/Generated" \
+              --plugin=protoc-gen-grpc=$(which grpc_csharp_plugin) \
               "$RPCPROTO_PATH"/*.proto
 
           done
@@ -105,5 +112,6 @@ jobs:
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add .
-          git commit -m "Generated C# files after rpcproto changes in ${{ steps.version.outputs.folder }}" || echo "No changes to commit"
+          git commit -m "Generated C# files (messages + gRPC stubs) after rpcproto changes in ${{ steps.version.outputs.folder }}" || echo "No changes to commit"
           git push
+          
