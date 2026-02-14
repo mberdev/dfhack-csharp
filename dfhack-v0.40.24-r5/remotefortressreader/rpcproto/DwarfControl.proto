@@ -1,4 +1,8 @@
-syntax = "proto2";
+
+service RpcService {
+  rpc GetSideMenu (EmptyMessage) returns (SidebarState);
+  rpc SetSideMenu (SidebarCommand) returns (EmptyMessage);
+}
 
 syntax = "proto2";
 
@@ -12,6 +16,8 @@ option optimize_for = LITE_RUNTIME;
 import "ui_sidebar_mode.proto";
 import "RemoteFortressReader.proto";
 
+// RPC GetSideMenu : EmptyMessage -> SidebarState
+// RPC SetSideMenu : SidebarCommand -> EmptyMessage
 
 
 enum BuildCategory
@@ -94,9 +100,4 @@ message BuildSelector
     optional int32 radius_y_high = 11;
     optional RemoteFortressReader.Coord cursor = 12;
     repeated int32 tiles = 13;
-}
-
-service RpcService {
-  rpc GetSideMenu (EmptyMessage) returns (SidebarState);
-  rpc SetSideMenu (SidebarCommand) returns (EmptyMessage);
 }

@@ -1,4 +1,11 @@
-syntax = "proto2";
+
+service RpcService {
+  rpc BindMethod (CoreBindRequest) returns (CoreBindReply);
+  rpc RunCommand (CoreRunCommandRequest) returns (EmptyMessage);
+  rpc CoreSuspend (EmptyMessage) returns (IntMessage);
+  rpc CoreResume (EmptyMessage) returns (IntMessage);
+  rpc RunLua (CoreRunLuaRequest) returns (StringListMessage);
+}
 
 syntax = "proto2";
 
@@ -66,6 +73,7 @@ message StringListMessage {
     repeated string value = 1;
 }
 
+// RPC BindMethod : CoreBindRequest -> CoreBindReply
 message CoreBindRequest {
     required string method = 1;
     required string input_msg = 2;
@@ -76,22 +84,18 @@ message CoreBindReply {
     required int32 assigned_id = 1;
 }
 
+// RPC RunCommand : CoreRunCommandRequest -> EmptyMessage
 message CoreRunCommandRequest {
     required string command = 1;
     repeated string arguments = 2;
 }
 
+// RPC CoreSuspend : EmptyMessage -> IntMessage
+// RPC CoreResume : EmptyMessage -> IntMessage
 
+// RPC RunLua : CoreRunLuaRequest -> StringListMessage
 message CoreRunLuaRequest {
     required string module = 1;
     required string function = 2;
     repeated string arguments = 3;
-}
-
-service RpcService {
-  rpc BindMethod (CoreBindRequest) returns (CoreBindReply);
-  rpc RunCommand (CoreRunCommandRequest) returns (EmptyMessage);
-  rpc CoreSuspend (EmptyMessage) returns (IntMessage);
-  rpc CoreResume (EmptyMessage) returns (IntMessage);
-  rpc RunLua (CoreRunLuaRequest) returns (StringListMessage);
 }

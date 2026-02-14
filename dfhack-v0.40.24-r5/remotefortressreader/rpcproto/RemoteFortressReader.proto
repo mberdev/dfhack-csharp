@@ -1,4 +1,42 @@
-syntax = "proto2";
+
+service RpcService {
+  rpc GetMaterialList (EmptyMessage) returns (MaterialList);
+  rpc GetGrowthList (EmptyMessage) returns (MaterialList);
+  rpc GetBlockList (BlockRequest) returns (BlockList);
+  rpc CheckHashes (EmptyMessage) returns (EmptyMessage);
+  rpc GetTiletypeList (EmptyMessage) returns (TiletypeList);
+  rpc GetPlantList (BlockRequest) returns (PlantList);
+  rpc GetUnitList (EmptyMessage) returns (UnitList);
+  rpc GetUnitListInside (BlockRequest) returns (UnitList);
+  rpc GetViewInfo (EmptyMessage) returns (ViewInfo);
+  rpc GetMapInfo (EmptyMessage) returns (MapInfo);
+  rpc ResetMapHashes (EmptyMessage) returns (EmptyMessage);
+  rpc GetItemList (EmptyMessage) returns (MaterialList);
+  rpc GetBuildingDefList (EmptyMessage) returns (BuildingList);
+  rpc GetWorldMap (EmptyMessage) returns (WorldMap);
+  rpc GetWorldMapNew (EmptyMessage) returns (WorldMap);
+  rpc GetRegionMaps (EmptyMessage) returns (RegionMaps);
+  rpc GetRegionMapsNew (EmptyMessage) returns (RegionMaps);
+  rpc GetCreatureRaws (EmptyMessage) returns (CreatureRawList);
+  rpc GetPartialCreatureRaws (ListRequest) returns (CreatureRawList);
+  rpc GetWorldMapCenter (EmptyMessage) returns (WorldMap);
+  rpc GetPlantRaws (EmptyMessage) returns (PlantRawList);
+  rpc GetPartialPlantRaws (ListRequest) returns (PlantRawList);
+  rpc CopyScreen (EmptyMessage) returns (ScreenCapture);
+  rpc PassKeyboardEvent (KeyboardEvent) returns (EmptyMessage);
+  rpc SendDigCommand (DigCommand) returns (EmptyMessage);
+  rpc SetPauseState (SingleBool) returns (EmptyMessage);
+  rpc GetPauseState (EmptyMessage) returns (SingleBool);
+  rpc GetVersionInfo (EmptyMessage) returns (VersionInfo);
+  rpc GetReports (EmptyMessage) returns (Status);
+  rpc MoveCommand (MoveCommandParams) returns (EmptyMessage);
+  rpc JumpCommand (MoveCommandParams) returns (EmptyMessage);
+  rpc MenuQuery (EmptyMessage) returns (MenuContents);
+  rpc MovementSelectCommand (IntMessage) returns (EmptyMessage);
+  rpc MiscMoveCommand (MiscMoveParams) returns (EmptyMessage);
+  rpc GetLanguage (EmptyMessage) returns (Language);
+  rpc GetGameValidity (EmptyMessage) returns (SingleBool);
+}
 
 syntax = "proto2";
 
@@ -11,6 +49,42 @@ option optimize_for = LITE_RUNTIME;
 
 import "ItemdefInstrument.proto";
 
+// RPC GetMaterialList : EmptyMessage -> MaterialList
+// RPC GetGrowthList : EmptyMessage -> MaterialList
+// RPC GetBlockList : BlockRequest -> BlockList
+// RPC CheckHashes : EmptyMessage -> EmptyMessage
+// RPC GetTiletypeList : EmptyMessage -> TiletypeList
+// RPC GetPlantList : BlockRequest -> PlantList
+// RPC GetUnitList : EmptyMessage -> UnitList
+// RPC GetUnitListInside : BlockRequest -> UnitList
+// RPC GetViewInfo : EmptyMessage -> ViewInfo
+// RPC GetMapInfo : EmptyMessage -> MapInfo
+// RPC ResetMapHashes : EmptyMessage -> EmptyMessage
+// RPC GetItemList : EmptyMessage -> MaterialList
+// RPC GetBuildingDefList : EmptyMessage -> BuildingList
+// RPC GetWorldMap : EmptyMessage -> WorldMap
+// RPC GetWorldMapNew : EmptyMessage -> WorldMap
+// RPC GetRegionMaps : EmptyMessage -> RegionMaps
+// RPC GetRegionMapsNew : EmptyMessage -> RegionMaps
+// RPC GetCreatureRaws : EmptyMessage -> CreatureRawList
+// RPC GetPartialCreatureRaws : ListRequest -> CreatureRawList
+// RPC GetWorldMapCenter : EmptyMessage -> WorldMap
+// RPC GetPlantRaws : EmptyMessage -> PlantRawList
+// RPC GetPartialPlantRaws : ListRequest -> PlantRawList
+// RPC CopyScreen : EmptyMessage -> ScreenCapture
+// RPC PassKeyboardEvent : KeyboardEvent -> EmptyMessage
+// RPC SendDigCommand : DigCommand -> EmptyMessage
+// RPC SetPauseState : SingleBool -> EmptyMessage
+// RPC GetPauseState : EmptyMessage -> SingleBool
+// RPC GetVersionInfo : EmptyMessage -> VersionInfo
+// RPC GetReports : EmptyMessage -> Status
+// RPC MoveCommand : MoveCommandParams -> EmptyMessage
+// RPC JumpCommand : MoveCommandParams -> EmptyMessage
+// RPC MenuQuery : EmptyMessage -> MenuContents
+// RPC MovementSelectCommand : IntMessage -> EmptyMessage
+// RPC MiscMoveCommand : MiscMoveParams -> EmptyMessage
+// RPC GetLanguage : EmptyMessage -> Language
+// RPC GetGameValidity : EmptyMessage -> SingleBool
 
 //We use shapes, etc, because the actual tiletypes may differ between DF versions.
 enum TiletypeShape
@@ -1094,43 +1168,4 @@ message Wave
 {
     optional Coord dest = 1;
     optional Coord pos = 2;
-}
-
-service RpcService {
-  rpc GetMaterialList (EmptyMessage) returns (MaterialList);
-  rpc GetGrowthList (EmptyMessage) returns (MaterialList);
-  rpc GetBlockList (BlockRequest) returns (BlockList);
-  rpc CheckHashes (EmptyMessage) returns (EmptyMessage);
-  rpc GetTiletypeList (EmptyMessage) returns (TiletypeList);
-  rpc GetPlantList (BlockRequest) returns (PlantList);
-  rpc GetUnitList (EmptyMessage) returns (UnitList);
-  rpc GetUnitListInside (BlockRequest) returns (UnitList);
-  rpc GetViewInfo (EmptyMessage) returns (ViewInfo);
-  rpc GetMapInfo (EmptyMessage) returns (MapInfo);
-  rpc ResetMapHashes (EmptyMessage) returns (EmptyMessage);
-  rpc GetItemList (EmptyMessage) returns (MaterialList);
-  rpc GetBuildingDefList (EmptyMessage) returns (BuildingList);
-  rpc GetWorldMap (EmptyMessage) returns (WorldMap);
-  rpc GetWorldMapNew (EmptyMessage) returns (WorldMap);
-  rpc GetRegionMaps (EmptyMessage) returns (RegionMaps);
-  rpc GetRegionMapsNew (EmptyMessage) returns (RegionMaps);
-  rpc GetCreatureRaws (EmptyMessage) returns (CreatureRawList);
-  rpc GetPartialCreatureRaws (ListRequest) returns (CreatureRawList);
-  rpc GetWorldMapCenter (EmptyMessage) returns (WorldMap);
-  rpc GetPlantRaws (EmptyMessage) returns (PlantRawList);
-  rpc GetPartialPlantRaws (ListRequest) returns (PlantRawList);
-  rpc CopyScreen (EmptyMessage) returns (ScreenCapture);
-  rpc PassKeyboardEvent (KeyboardEvent) returns (EmptyMessage);
-  rpc SendDigCommand (DigCommand) returns (EmptyMessage);
-  rpc SetPauseState (SingleBool) returns (EmptyMessage);
-  rpc GetPauseState (EmptyMessage) returns (SingleBool);
-  rpc GetVersionInfo (EmptyMessage) returns (VersionInfo);
-  rpc GetReports (EmptyMessage) returns (Status);
-  rpc MoveCommand (MoveCommandParams) returns (EmptyMessage);
-  rpc JumpCommand (MoveCommandParams) returns (EmptyMessage);
-  rpc MenuQuery (EmptyMessage) returns (MenuContents);
-  rpc MovementSelectCommand (IntMessage) returns (EmptyMessage);
-  rpc MiscMoveCommand (MiscMoveParams) returns (EmptyMessage);
-  rpc GetLanguage (EmptyMessage) returns (Language);
-  rpc GetGameValidity (EmptyMessage) returns (SingleBool);
 }
