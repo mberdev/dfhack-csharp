@@ -20,9 +20,15 @@ jobs:
         run: |
           git submodule update --remote --init dfhack
 
-      - name: Detect changes only in proto folders
+      - name: Detect changes only in proto folders (skip on manual run)
         id: check_proto_changes
         run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "Manual run detected — forcing regeneration"
+            echo "changed=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
           CHANGES=$(git diff --name-only HEAD | grep -E \
             "dfhack/library/proto/|dfhack/plugins/remotefortressreader/proto/" || true)
 
@@ -78,5 +84,5 @@ jobs:
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add .
-          git commit -m "Monthly proto sync for dfhack v${{ steps.version.outputs.version }}: updated proto files + regenerated C#"
+          git commit -m "Proto sync for dfhack v${{ steps.version.outputs.version }}: regenerated C# files"
           git push
