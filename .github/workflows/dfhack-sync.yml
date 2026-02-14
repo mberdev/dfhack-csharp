@@ -68,8 +68,9 @@ jobs:
           rm protoc.zip
           protoc --version
 
+
       ###############################################################
-      # PROCESS ALL FOLDERS
+      # GENERATE /rpcproto FOR ALL FOLDERS
       ###############################################################
 
       - name: Process proto sources (dfhack + remotefortressreader)
@@ -151,17 +152,6 @@ jobs:
               # Everything from the insertion point onward
               tail -n +"$INSERT_LINE" "$FILE" >> "$OUTFILE"
             done
-
-            ###############################################################
-            # 3. GENERATE C# FILES
-            ###############################################################
-            rm -rf "$OUTBASE/Generated" || true
-            mkdir -p "$OUTBASE/Generated"
-
-            protoc \
-              --csharp_out="$OUTBASE/Generated" \
-              --proto_path="$SOURCE_PROTO" \
-              "$SOURCE_PROTO"/*.proto
 
           done
 

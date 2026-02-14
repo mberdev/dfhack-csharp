@@ -5,12 +5,13 @@ on:
     workflows: ["Monthly Proto Sync"]
     types:
       - completed
-      
+
 permissions:
   contents: write   # Required so git push works
 
 jobs:
   generate-csharp:
+    # Only run if Workflow A succeeded
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-22.04
 
@@ -18,15 +19,45 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 2   # Needed so we can diff against previous commit
 
-      - name: Determine latest DFHack version from folder
+      ###############################################################
+      # DETERMINE LATEST VERSION FOLDER
+      ###############################################################
+
+      - name: Determine latest DFHack version folder
         id: version
         run: |
-          # Extract the version folder name dynamically
-          VERSION=$(ls -d dfhack-* | sort -V | tail -n 1 | sed 's/dfhack-//')
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Detected version: $VERSION"
+          VERSION_FOLDER=$(ls -d dfhack-* | sort -V | tail -n 1)
+          echo "folder=$VERSION_FOLDER" >> $GITHUB_OUTPUT
+          echo "Detected version folder: $VERSION_FOLDER"
+
+      ###############################################################
+      # DETERMINE IF ANY RPCPROTO FILES CHANGED
+      ###############################################################
+
+      - name: Check for rpcproto changes
+        id: changes
+        run: |
+          VERSION_FOLDER="${{ steps.version.outputs.folder }}"
+
+          # Detect changes in any rpcproto folder inside the version folder
+          if git diff --quiet HEAD^ HEAD -- "$VERSION_FOLDER"/*/rpcproto; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "No rpcproto changes detected"
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "rpcproto changes detected"
+          fi
+
+      # Stop early if nothing changed
+      - name: Stop if no C# generation is needed
+        if: ${{ steps.changes.outputs.changed != 'true' }}
+        run: echo "Skipping C# generation because no rpcproto changes were detected."
+
+      ###############################################################
+      # INSTALL PROTOC
+      ###############################################################
 
       - name: Install protoc (pinned version)
         run: |
@@ -40,33 +71,29 @@ jobs:
           protoc --version
 
       ###############################################################
-      # PROCESS ALL FOLDERS (same mapping as Workflow A)
+      # GENERATE C# FILES FOR ALL RPCPROTO FOLDERS
       ###############################################################
 
       - name: Generate C# files
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
+          VERSION_FOLDER="${{ steps.version.outputs.folder }}"
 
-          MAPPING=(
-            "dfhack/library/proto dfhack-$VERSION/dfhack"
-            "dfhack/plugins/remotefortressreader/proto dfhack-$VERSION/remotefortressreader"
-          )
+          # Find all rpcproto folders inside the version folder
+          find "$VERSION_FOLDER" -type d -name rpcproto | while read RPCPROTO_PATH; do
+            OUTBASE=$(dirname "$RPCPROTO_PATH")
 
-          for ENTRY in "${MAPPING[@]}"; do
-            set -- $ENTRY
-            SOURCE_PROTO="$1"
-            OUTBASE="$2"
-
-            echo "Generating C# for: $SOURCE_PROTO"
-            echo "Output base: $OUTBASE"
+            echo "Generating C# for:"
+            echo "  Input proto folder: $RPCPROTO_PATH"
+            echo "  Output base:        $OUTBASE"
 
             rm -rf "$OUTBASE/Generated" || true
             mkdir -p "$OUTBASE/Generated"
 
             protoc \
               --csharp_out="$OUTBASE/Generated" \
-              --proto_path="$SOURCE_PROTO" \
-              "$SOURCE_PROTO"/*.proto
+              --proto_path="$RPCPROTO_PATH" \
+              "$RPCPROTO_PATH"/*.proto
+
           done
 
       ###############################################################
@@ -78,5 +105,5 @@ jobs:
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add .
-          git commit -m "Generated C# files for DFHack v${{ steps.version.outputs.version }}" || echo "No changes to commit"
+          git commit -m "Generated C# files after rpcproto changes in ${{ steps.version.outputs.folder }}" || echo "No changes to commit"
           git push
