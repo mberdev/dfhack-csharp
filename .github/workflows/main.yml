@@ -5,6 +5,8 @@ on:
     - cron: "0 0 1 * *"   # Midnight on the 1st of every month
   workflow_dispatch:
 
+permissions: contents: write
+
 jobs:
   update-protos:
     runs-on: ubuntu-22.04   # explicit Ubuntu version
