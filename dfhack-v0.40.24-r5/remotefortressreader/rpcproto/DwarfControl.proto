@@ -1,10 +1,13 @@
+syntax = "proto2";
+
+import "ui_sidebar_mode.proto";
+import "RemoteFortressReader.proto";
 
 service RpcService {
   rpc GetSideMenu (EmptyMessage) returns (SidebarState);
   rpc SetSideMenu (SidebarCommand) returns (EmptyMessage);
 }
 
-syntax = "proto2";
 
 //Attempts to provide a complete framework for reading everything from a fortress needed for vizualization
 package DwarfControl;
@@ -13,8 +16,6 @@ option optimize_for = LITE_RUNTIME;
 
 // Plugin: RemoteFortressReader
 
-import "ui_sidebar_mode.proto";
-import "RemoteFortressReader.proto";
 
 // RPC GetSideMenu : EmptyMessage -> SidebarState
 // RPC SetSideMenu : SidebarCommand -> EmptyMessage

@@ -1,3 +1,6 @@
+syntax = "proto2";
+
+import "ItemdefInstrument.proto";
 
 service RpcService {
   rpc GetMaterialList (EmptyMessage) returns (MaterialList);
@@ -38,7 +41,6 @@ service RpcService {
   rpc GetGameValidity (EmptyMessage) returns (SingleBool);
 }
 
-syntax = "proto2";
 
 //Attempts to provide a complete framework for reading everything from a fortress needed for vizualization
 package RemoteFortressReader;
@@ -47,7 +49,6 @@ option optimize_for = LITE_RUNTIME;
 
 // Plugin: RemoteFortressReader
 
-import "ItemdefInstrument.proto";
 
 // RPC GetMaterialList : EmptyMessage -> MaterialList
 // RPC GetGrowthList : EmptyMessage -> MaterialList

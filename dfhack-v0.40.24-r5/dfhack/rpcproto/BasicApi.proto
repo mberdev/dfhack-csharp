@@ -1,3 +1,6 @@
+syntax = "proto2";
+
+import "Basic.proto";
 
 service RpcService {
   rpc GetVersion (EmptyMessage) returns (StringMessage);
@@ -11,13 +14,11 @@ service RpcService {
   rpc SetUnitLabors (SetUnitLaborsIn) returns (EmptyMessage);
 }
 
-syntax = "proto2";
 
 package dfproto;
 
 option optimize_for = LITE_RUNTIME;
 
-import "Basic.proto";
 
 // RPC GetVersion : EmptyMessage -> StringMessage
 // RPC GetDFVersion : EmptyMessage -> StringMessage
