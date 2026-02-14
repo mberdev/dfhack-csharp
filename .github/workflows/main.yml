@@ -6,11 +6,11 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: write   # Required so git push works
 
 jobs:
   update-protos:
-    runs-on: ubuntu-22.04   # explicit Ubuntu version
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout Repo B with submodules
@@ -44,13 +44,18 @@ jobs:
             echo "No proto changes detected"
           fi
 
-      - name: Read dfhack version
+      - name: Determine latest DFHack version from tags
         id: version
         if: steps.check_proto_changes.outputs.changed == 'true'
         run: |
-          VERSION=$(cat dfhack/VERSION | tr -d ' \n')
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Detected dfhack version: $VERSION"
+          # Fetch all tags from DFHack repo
+          TAGS=$(git ls-remote --tags https://github.com/DFHack/dfhack.git | awk -F'/' '{print $3}' | sed 's/\^{}//' )
+
+          # Sort tags using version-aware sorting and pick the highest
+          LATEST=$(echo "$TAGS" | sort -V | tail -n 1)
+
+          echo "version=$LATEST" >> $GITHUB_OUTPUT
+          echo "Detected DFHack version: $LATEST"
 
       - name: Install protoc (pinned version)
         if: steps.check_proto_changes.outputs.changed == 'true'
@@ -92,5 +97,5 @@ jobs:
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add .
-          git commit -m "Proto sync for dfhack v${{ steps.version.outputs.version }}: regenerated C# files"
+          git commit -m "Proto sync for dfhack v${{ steps.version.outputs.version }}: regenerated C# files" || echo "No changes to commit"
           git push
