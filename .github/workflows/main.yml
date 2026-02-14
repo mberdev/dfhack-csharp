@@ -68,6 +68,22 @@ jobs:
           rm protoc.zip
           protoc --version
 
+      - name: Copy proto files (dfhack/library/proto)
+        if: steps.check_proto_changes.outputs.changed == 'true'
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          DEST="dfhack-$VERSION/dfhack/proto"
+          mkdir -p "$DEST"
+          cp dfhack/library/proto/*.proto "$DEST"
+
+      - name: Copy proto files (dfhack/plugins/remotefortressreader/proto)
+        if: steps.check_proto_changes.outputs.changed == 'true'
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          DEST="dfhack-$VERSION/remotefortressreader/proto"
+          mkdir -p "$DEST"
+          cp dfhack/plugins/remotefortressreader/proto/*.proto "$DEST"
+
       - name: Generate C# files (dfhack/library/proto)
         if: steps.check_proto_changes.outputs.changed == 'true'
         run: |
