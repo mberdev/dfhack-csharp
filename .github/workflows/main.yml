@@ -72,7 +72,7 @@ jobs:
         if: steps.check_proto_changes.outputs.changed == 'true'
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          BASE="Generated/dfhack-$VERSION"
+          BASE="dfhack-$VERSION/Generated"
           OUT="$BASE/dfhack"
 
           mkdir -p "$OUT"
@@ -87,7 +87,7 @@ jobs:
         if: steps.check_proto_changes.outputs.changed == 'true'
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          BASE="Generated/dfhack-$VERSION"
+          BASE="dfhack-$VERSION/Generated"
           OUT="$BASE/remotefortressreader"
 
           mkdir -p "$OUT"
