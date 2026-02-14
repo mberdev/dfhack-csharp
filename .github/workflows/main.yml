@@ -1,0 +1,82 @@
+name: Monthly Proto Sync
+
+on:
+  schedule:
+    - cron: "0 0 1 * *"   # Midnight on the 1st of every month
+  workflow_dispatch:
+
+jobs:
+  update-protos:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repo B with submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      - name: Update dfhack submodule to latest commit
+        run: |
+          git submodule update --remote --init dfhack
+
+      - name: Detect changes only in proto folders
+        id: check_proto_changes
+        run: |
+          CHANGES=$(git diff --name-only HEAD | grep -E \
+            "dfhack/library/proto/|dfhack/plugins/remotefortressreader/proto/" || true)
+
+          if [[ -n "$CHANGES" ]]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Proto changes detected:"
+            echo "$CHANGES"
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "No proto changes detected"
+          fi
+
+      - name: Read dfhack version
+        id: version
+        if: steps.check_proto_changes.outputs.changed == 'true'
+        run: |
+          VERSION=$(cat dfhack/VERSION | tr -d ' \n')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Detected dfhack version: $VERSION"
+
+      - name: Install protoc + C# plugin
+        if: steps.check_proto_changes.outputs.changed == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler
+          dotnet tool install --global Google.Protobuf.Tools
+
+      - name: Generate C# files (dfhack/library/proto)
+        if: steps.check_proto_changes.outputs.changed == 'true'
+        run: |
+          SRC="dfhack/library/proto"
+          OUT="Generated/dfhack-${{ steps.version.outputs.version }}"
+          mkdir -p "$OUT"
+          protoc \
+            --csharp_out="$OUT" \
+            --proto_path="$SRC" \
+            $SRC/*.proto
+
+      - name: Generate C# files (dfhack/plugins/remotefortressreader/proto)
+        if: steps.check_proto_changes.outputs.changed == 'true'
+        run: |
+          SRC="dfhack/plugins/remotefortressreader/proto"
+          OUT="Generated/remotefortressreader-${{ steps.version.outputs.version }}"
+          mkdir -p "$OUT"
+          protoc \
+            --csharp_out="$OUT" \
+            --proto_path="$SRC" \
+            $SRC/*.proto
+
+      - name: Commit updates
+        if: steps.check_proto_changes.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add .
+          git commit -m "Monthly proto sync for dfhack v${{ steps.version.outputs.version }}: updated proto files + regenerated C#"
+          git push
