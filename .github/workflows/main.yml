@@ -118,5 +118,5 @@ jobs:
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add .
-          git commit -m "Proto sync for DFHack v${{ steps.version.outputs.version }}: regenerated C# files" || echo "No changes to commit"
+          git commit -m "Proto sync for DFHack v${{ steps.version.outputs.version }}: regenerated C# files and copied proto sources" || echo "No changes to commit"
           git push
