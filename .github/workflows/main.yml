@@ -98,6 +98,7 @@ jobs:
           VERSION="${{ steps.version.outputs.version }}"
           SRC="dfhack-$VERSION/dfhack/proto"
           DEST="dfhack-$VERSION/dfhack/rpcproto"
+          rm -rf "$DEST" || true
           mkdir -p "$DEST"
 
           for FILE in "$SRC"/*.proto; do
@@ -154,6 +155,7 @@ jobs:
           VERSION="${{ steps.version.outputs.version }}"
           SRC="dfhack-$VERSION/remotefortressreader/proto"
           DEST="dfhack-$VERSION/remotefortressreader/rpcproto"
+          rm -rf "$DEST" || true
           mkdir -p "$DEST"
 
           for FILE in "$SRC"/*.proto; do
@@ -205,6 +207,7 @@ jobs:
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           OUT="dfhack-$VERSION/dfhack/Generated"
+          rm -rf "$OUT" || true
           mkdir -p "$OUT"
 
           SRC="dfhack/library/proto"
@@ -218,6 +221,7 @@ jobs:
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           OUT="dfhack-$VERSION/remotefortressreader/Generated"
+          rm -rf "$OUT" || true
           mkdir -p "$OUT"
 
           SRC="dfhack/plugins/remotefortressreader/proto"
