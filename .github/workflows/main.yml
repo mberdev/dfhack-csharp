@@ -68,6 +68,10 @@ jobs:
           rm protoc.zip
           protoc --version
 
+      ###############################################################
+      # COPY ORIGINAL PROTO FILES
+      ###############################################################
+
       - name: Copy proto files (dfhack/library/proto)
         if: steps.check_proto_changes.outputs.changed == 'true'
         run: |
@@ -84,12 +88,91 @@ jobs:
           mkdir -p "$DEST"
           cp dfhack/plugins/remotefortressreader/proto/*.proto "$DEST"
 
+      ###############################################################
+      # CREATE RPCPROTO FOLDERS + CONVERT RPC COMMENTS TO SERVICE SYNTAX
+      ###############################################################
+
+      - name: Convert proto files to RPC-enabled versions (dfhack)
+        if: steps.check_proto_changes.outputs.changed == 'true'
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          SRC="dfhack-$VERSION/dfhack/proto"
+          DEST="dfhack-$VERSION/dfhack/rpcproto"
+          mkdir -p "$DEST"
+
+          for FILE in "$SRC"/*.proto; do
+            BASENAME=$(basename "$FILE")
+            OUTFILE="$DEST/$BASENAME"
+
+            echo 'syntax = "proto2";' > "$OUTFILE"
+            echo >> "$OUTFILE"
+
+            # Copy original content except RPC comments
+            grep -v "// RPC" "$FILE" >> "$OUTFILE"
+
+            # Extract RPC lines
+            RPC_LINES=$(grep "// RPC" "$FILE" || true)
+
+            if [[ -n "$RPC_LINES" ]]; then
+              echo >> "$OUTFILE"
+              echo "service RpcService {" >> "$OUTFILE"
+
+              while read -r LINE; do
+                METHOD=$(echo "$LINE" | sed -E 's|.*RPC ([^: ]+).*|\1|')
+                INPUT=$(echo "$LINE"  | sed -E 's|.*: ([^ ]+) ->.*|\1|')
+                OUTPUT=$(echo "$LINE" | sed -E 's|.*-> ([^ ]+).*|\1|')
+
+                echo "  rpc $METHOD ($INPUT) returns ($OUTPUT);" >> "$OUTFILE"
+              done <<< "$RPC_LINES"
+
+              echo "}" >> "$OUTFILE"
+            fi
+          done
+
+      - name: Convert proto files to RPC-enabled versions (remotefortressreader)
+        if: steps.check_proto_changes.outputs.changed == 'true'
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          SRC="dfhack-$VERSION/remotefortressreader/proto"
+          DEST="dfhack-$VERSION/remotefortressreader/rpcproto"
+          mkdir -p "$DEST"
+
+          for FILE in "$SRC"/*.proto; do
+            BASENAME=$(basename "$FILE")
+            OUTFILE="$DEST/$BASENAME"
+
+            echo 'syntax = "proto2";' > "$OUTFILE"
+            echo >> "$OUTFILE"
+
+            grep -v "// RPC" "$FILE" >> "$OUTFILE"
+
+            RPC_LINES=$(grep "// RPC" "$FILE" || true)
+
+            if [[ -n "$RPC_LINES" ]]; then
+              echo >> "$OUTFILE"
+              echo "service RpcService {" >> "$OUTFILE"
+
+              while read -r LINE; do
+                METHOD=$(echo "$LINE" | sed -E 's|.*RPC ([^: ]+).*|\1|')
+                INPUT=$(echo "$LINE"  | sed -E 's|.*: ([^ ]+) ->.*|\1|')
+                OUTPUT=$(echo "$LINE" | sed -E 's|.*-> ([^ ]+).*|\1|')
+
+                echo "  rpc $METHOD ($INPUT) returns ($OUTPUT);" >> "$OUTFILE"
+              done <<< "$RPC_LINES"
+
+              echo "}" >> "$OUTFILE"
+            fi
+          done
+
+      ###############################################################
+      # GENERATE C# FILES FROM ORIGINAL PROTO SOURCES
+      ###############################################################
+
       - name: Generate C# files (dfhack/library/proto)
         if: steps.check_proto_changes.outputs.changed == 'true'
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           OUT="dfhack-$VERSION/dfhack/Generated"
-
           mkdir -p "$OUT"
 
           SRC="dfhack/library/proto"
@@ -103,7 +186,6 @@ jobs:
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           OUT="dfhack-$VERSION/remotefortressreader/Generated"
-
           mkdir -p "$OUT"
 
           SRC="dfhack/plugins/remotefortressreader/proto"
@@ -112,11 +194,15 @@ jobs:
             --proto_path="$SRC" \
             $SRC/*.proto
 
+      ###############################################################
+      # COMMIT RESULTS
+      ###############################################################
+
       - name: Commit updates
         if: steps.check_proto_changes.outputs.changed == 'true'
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add .
-          git commit -m "Proto sync for DFHack v${{ steps.version.outputs.version }}: regenerated C# files and copied proto sources" || echo "No changes to commit"
+          git commit -m "Proto sync for DFHack v${{ steps.version.outputs.version }}: regenerated C#, copied proto, generated rpcproto" || echo "No changes to commit"
           git push
