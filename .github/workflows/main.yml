@@ -7,7 +7,7 @@ on:
 
 jobs:
   update-protos:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04   # explicit Ubuntu version
 
     steps:
       - name: Checkout Repo B with submodules
@@ -49,12 +49,17 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Detected dfhack version: $VERSION"
 
-      - name: Install protoc + C# plugin
+      - name: Install protoc (pinned version)
         if: steps.check_proto_changes.outputs.changed == 'true'
         run: |
+          PROTOC_VERSION="27.2"
+          curl -L -o protoc.zip \
+            "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip"
           sudo apt-get update
-          sudo apt-get install -y protobuf-compiler
-          dotnet tool install --global Google.Protobuf.Tools
+          sudo apt-get install -y unzip
+          sudo unzip protoc.zip -d /usr/local
+          rm protoc.zip
+          protoc --version
 
       - name: Generate C# files (dfhack/library/proto)
         if: steps.check_proto_changes.outputs.changed == 'true'
