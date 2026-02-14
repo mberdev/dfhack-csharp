@@ -1,0 +1,82 @@
+name: Generate C# After Proto Sync
+
+on:
+  workflow_run:
+    workflows: ["Monthly Proto Sync"]
+    types:
+      - completed
+      
+permissions:
+  contents: write   # Required so git push works
+
+jobs:
+  generate-csharp:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine latest DFHack version from folder
+        id: version
+        run: |
+          # Extract the version folder name dynamically
+          VERSION=$(ls -d dfhack-* | sort -V | tail -n 1 | sed 's/dfhack-//')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Detected version: $VERSION"
+
+      - name: Install protoc (pinned version)
+        run: |
+          PROTOC_VERSION="27.2"
+          curl -L -o protoc.zip \
+            "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip"
+          sudo apt-get update
+          sudo apt-get install -y unzip
+          sudo unzip protoc.zip -d /usr/local
+          rm protoc.zip
+          protoc --version
+
+      ###############################################################
+      # PROCESS ALL FOLDERS (same mapping as Workflow A)
+      ###############################################################
+
+      - name: Generate C# files
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+
+          MAPPING=(
+            "dfhack/library/proto dfhack-$VERSION/dfhack"
+            "dfhack/plugins/remotefortressreader/proto dfhack-$VERSION/remotefortressreader"
+          )
+
+          for ENTRY in "${MAPPING[@]}"; do
+            set -- $ENTRY
+            SOURCE_PROTO="$1"
+            OUTBASE="$2"
+
+            echo "Generating C# for: $SOURCE_PROTO"
+            echo "Output base: $OUTBASE"
+
+            rm -rf "$OUTBASE/Generated" || true
+            mkdir -p "$OUTBASE/Generated"
+
+            protoc \
+              --csharp_out="$OUTBASE/Generated" \
+              --proto_path="$SOURCE_PROTO" \
+              "$SOURCE_PROTO"/*.proto
+          done
+
+      ###############################################################
+      # COMMIT RESULTS
+      ###############################################################
+
+      - name: Commit updates
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add .
+          git commit -m "Generated C# files for DFHack v${{ steps.version.outputs.version }}" || echo "No changes to commit"
+          git push
