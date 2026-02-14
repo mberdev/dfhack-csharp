@@ -48,10 +48,9 @@ jobs:
         id: version
         if: steps.check_proto_changes.outputs.changed == 'true'
         run: |
-          # Fetch all tags from DFHack repo
-          TAGS=$(git ls-remote --tags https://github.com/DFHack/dfhack.git | awk -F'/' '{print $3}' | sed 's/\^{}//' )
+          TAGS=$(git ls-remote --tags https://github.com/DFHack/dfhack.git | \
+            awk -F'/' '{print $3}' | sed 's/\^{}//' )
 
-          # Sort tags using version-aware sorting and pick the highest
           LATEST=$(echo "$TAGS" | sort -V | tail -n 1)
 
           echo "version=$LATEST" >> $GITHUB_OUTPUT
@@ -72,9 +71,13 @@ jobs:
       - name: Generate C# files (dfhack/library/proto)
         if: steps.check_proto_changes.outputs.changed == 'true'
         run: |
-          SRC="dfhack/library/proto"
-          OUT="Generated/dfhack-${{ steps.version.outputs.version }}"
+          VERSION="${{ steps.version.outputs.version }}"
+          BASE="Generated/dfhack-$VERSION"
+          OUT="$BASE/dfhack"
+
           mkdir -p "$OUT"
+
+          SRC="dfhack/library/proto"
           protoc \
             --csharp_out="$OUT" \
             --proto_path="$SRC" \
@@ -83,9 +86,13 @@ jobs:
       - name: Generate C# files (dfhack/plugins/remotefortressreader/proto)
         if: steps.check_proto_changes.outputs.changed == 'true'
         run: |
-          SRC="dfhack/plugins/remotefortressreader/proto"
-          OUT="Generated/remotefortressreader-${{ steps.version.outputs.version }}"
+          VERSION="${{ steps.version.outputs.version }}"
+          BASE="Generated/dfhack-$VERSION"
+          OUT="$BASE/remotefortressreader"
+
           mkdir -p "$OUT"
+
+          SRC="dfhack/plugins/remotefortressreader/proto"
           protoc \
             --csharp_out="$OUT" \
             --proto_path="$SRC" \
@@ -97,5 +104,5 @@ jobs:
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add .
-          git commit -m "Proto sync for dfhack v${{ steps.version.outputs.version }}: regenerated C# files" || echo "No changes to commit"
+          git commit -m "Proto sync for DFHack v${{ steps.version.outputs.version }}: regenerated C# files" || echo "No changes to commit"
           git push
