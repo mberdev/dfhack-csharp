@@ -101,7 +101,7 @@ jobs:
           MISSING_IMPORTS=(
             "BasicApi.proto CoreProtocol.proto"
             "RemoteFortressReader.proto CoreProtocol.proto"
-            "RemoteFortressReader.proto AdventureControl.proto"
+            "DwarfControl.proto CoreProtocol.proto"
           )
 
           # Define RPC commands to exclude from generation (until AdventureControl and RemoteFortressReader fix their cyclic types dependency)
@@ -341,7 +341,7 @@ jobs:
 
                 if [[ "$EXCLUDED" == "true" ]]; then
                   # Commented-out RPC line
-                  echo "  # rpc $METHOD ($INPUT_PACKAGE.$INPUT) returns ($OUTPUT_PACKAGE.$OUTPUT);  # Command manually excluded (see COMMANDS_TO_EXCLUDE)" >> "$OUTFILE"
+                  echo "  // rpc $METHOD ($INPUT_PACKAGE.$INPUT) returns ($OUTPUT_PACKAGE.$OUTPUT);  // Command manually excluded (see COMMANDS_TO_EXCLUDE)" >> "$OUTFILE"
                 else
                   # Normal RPC line
                   echo "  rpc $METHOD ($INPUT_PACKAGE.$INPUT) returns ($OUTPUT_PACKAGE.$OUTPUT);" >> "$OUTFILE"
