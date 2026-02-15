@@ -100,7 +100,7 @@ jobs:
           # Define missing imports (filename + import)
           MISSING_IMPORTS=(
             "BasicApi.proto CoreProtocol.proto"
-            "RemoteFortressReader.proto CoreProtocol.proto"
+            "RemoteFortressReader.proto ../dfhack/CoreProtocol.proto"
             "AdventureControl.proto RemoteFortressReader.proto"
           )
 
