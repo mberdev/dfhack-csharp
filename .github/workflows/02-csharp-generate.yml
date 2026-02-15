@@ -132,17 +132,17 @@ jobs:
             echo "Generating C# for:"
             echo "  Input proto folder:   $RPCPROTO_PATH"
             echo "  DFHack proto folder:  $DFHACK_PATH"
-            echo "  Output base:          $OUTBASE/Generated"
+            echo "  Output base:          $OUTBASE/csharp"
 
-            rm -rf "$OUTBASE/Generated" || true
-            mkdir -p "$OUTBASE/Generated"
+            rm -rf "$OUTBASE/csharp" || true
+            mkdir -p "$OUTBASE/csharp"
 
             protoc \
               --proto_path="$RPCPROTO_PATH" \
               --proto_path="$DFHACK_PATH" \
-              --csharp_out="$OUTBASE/Generated" \
+              --csharp_out="$OUTBASE/csharp" \
               "$RPCPROTO_PATH"/*.proto
-              # --grpc_out="$OUTBASE/Generated" \
+              # --grpc_out="$OUTBASE/csharp" \
               # --plugin=protoc-gen-grpc=$(which grpc_csharp_plugin) \
 
           done
@@ -156,5 +156,5 @@ jobs:
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add .
-          git commit -m "Generated C# files (messages + gRPC stubs) for all rpcproto folders missing Generated output" || echo "No changes to commit"
+          git commit -m "Generated C# files (messages + gRPC stubs) for all rpcproto folders missing a sibling /csharp folder" || echo "No changes to commit"
           git push
