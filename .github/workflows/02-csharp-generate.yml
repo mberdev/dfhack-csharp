@@ -125,15 +125,19 @@ jobs:
 
             OUTBASE=$(dirname "$RPCPROTO_PATH")
 
+            DFHACK_PATH="$RPCPROTO_PATH/../../dfhack/rpcproto"
+
             echo "Generating C# for:"
-            echo "  Input proto folder: $RPCPROTO_PATH"
-            echo "  Output base:        $OUTBASE/Generated"
+            echo "  Input proto folder:   $RPCPROTO_PATH"
+            echo "  DFHack proto folder:  $DFHACK_PATH"
+            echo "  Output base:          $OUTBASE/Generated"
 
             rm -rf "$OUTBASE/Generated" || true
             mkdir -p "$OUTBASE/Generated"
 
             protoc \
               --proto_path="$RPCPROTO_PATH" \
+              --proto_path="$DFHACK_PATH" \
               --csharp_out="$OUTBASE/Generated" \
               "$RPCPROTO_PATH"/*.proto
               # --grpc_out="$OUTBASE/Generated" \
