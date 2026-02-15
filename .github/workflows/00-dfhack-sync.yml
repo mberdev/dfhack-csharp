@@ -16,6 +16,7 @@ jobs:
       - name: Checkout Repo B with submodules
         uses: actions/checkout@v4
         with:
+          ref: main
           submodules: true
           fetch-depth: 0
 

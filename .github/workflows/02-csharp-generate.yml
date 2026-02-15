@@ -5,21 +5,32 @@ on:
     workflows: ["01 (TRIGGERED) Generate rpcproto After DFHack Proto Sync"]
     types:
       - completed
+  workflow_dispatch:
 
 permissions:
   contents: write   # Required so git push works
 
 jobs:
   generate-csharp:
-    # Only run if Workflow A succeeded
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    # Run if:
+    # - Started manually (workflow_dispatch), OR
+    # - Started by workflow_run AND previous workflow succeeded
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+
     runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
+          ref: main
           fetch-depth: 2   # Needed so we can diff against previous commit
+
+      - name: Ensure branch is up to date
+        run: |
+          git fetch origin main
+          git checkout main
+          git pull origin main --rebase
 
       ###############################################################
       # FIND ALL RPCPROTO FOLDERS ANYWHERE UNDER ANY dfhack-* FOLDER
