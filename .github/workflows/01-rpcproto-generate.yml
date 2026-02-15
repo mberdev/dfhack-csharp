@@ -107,6 +107,36 @@ jobs:
           for PROTO_PATH in $(cat proto_list.txt); do
             [[ "$PROTO_PATH" == "none" ]] && continue
 
+            #################################################################
+            # FIND dfhack-vXXX folder 
+            #################################################################
+
+            CURRENT_DFHACK_ROOT=""
+
+            PATH_PARTS="$PROTO_PATH"
+
+            while [[ "$PATH_PARTS" != "." && "$PATH_PARTS" != "/" && -n "$PATH_PARTS" ]]; do
+              BASENAME=$(basename "$PATH_PARTS")
+
+              if [[ "$BASENAME" == dfhack-v* ]]; then
+                CURRENT_DFHACK_ROOT="$PATH_PARTS"
+                break
+              fi
+
+              PATH_PARTS=$(dirname "$PATH_PARTS")
+            done
+
+            if [[ -z "$CURRENT_DFHACK_ROOT" ]]; then
+              echo "ERROR: Could not find a dfhack-v* root folder above $FILE"
+              exit 1
+            fi
+
+            echo "dfhack folder is: $CURRENT_DFHACK_ROOT"
+
+            #################################################################
+            # PROCESS FOLDER
+            #################################################################
+            
             OUTBASE=$(dirname "$PROTO_PATH")
             RPCPROTO="$OUTBASE/rpcproto"
 
@@ -217,14 +247,83 @@ jobs:
               # Insert service block
               SERVICE_NAME="$(basename "$FILE" .proto)RpcService"
               echo "service $SERVICE_NAME {" >> "$OUTFILE"
+
               while read -r LINE; do
                 METHOD=$(echo "$LINE" | sed -E 's|.*RPC ([^: ]+).*|\1|')
                 INPUT=$(echo "$LINE"  | sed -E 's|.*: ([^ ]+) ->.*|\1|')
                 OUTPUT=$(echo "$LINE" | sed -E 's|.*-> ([^ ]+).*|\1|')
-                echo "  rpc $METHOD ($INPUT) returns ($OUTPUT);" >> "$OUTFILE"
+
+                ###############################################################
+                # FIND INPUT PACKAGE
+                ###############################################################
+                INPUT_PACKAGE=""
+
+                # Search all .proto files under CURRENT_DFHACK_ROOT
+                while read -r CANDIDATE; do
+                  # Skip non-regular files just in case
+                  [[ -f "$CANDIDATE" ]] || continue
+
+                  # Does this file define the message we're looking for?
+                  if grep -qE "^[[:space:]]*message[[:space:]]+$INPUT\b" "$CANDIDATE"; then
+                    # Extract the package line
+                    PKG_LINE=$(grep -E "^[[:space:]]*package[[:space:]]+[^;]+;" "$CANDIDATE" || true)
+                    if [[ -z "$PKG_LINE" ]]; then
+                      echo "ERROR: Could not find package for message '$INPUT' in file '$CANDIDATE'"
+                      exit 1
+                    fi
+
+                    # Extract just the package name
+                    INPUT_PACKAGE=$(echo "$PKG_LINE" | sed -E 's/^[[:space:]]*package[[:space:]]+([^;]+);/\1/')
+                    break
+                  fi
+                done < <(find "$CURRENT_DFHACK_ROOT" -type f -name "*.proto")
+
+                if [[ -z "$INPUT_PACKAGE" ]]; then
+                  echo "ERROR: Could not locate message definition for '$INPUT' under $CURRENT_DFHACK_ROOT"
+                  exit 1
+                fi
+
+
+                ###############################################################
+                # FIND OUTPUT PACKAGE
+                ###############################################################
+                OUTPUT_PACKAGE=""
+
+                # Search all .proto files under CURRENT_DFHACK_ROOT
+                while read -r CANDIDATE; do
+                  # Skip non-regular files just in case
+                  [[ -f "$CANDIDATE" ]] || continue
+
+                  # Does this file define the message we're looking for?
+                  if grep -qE "^[[:space:]]*message[[:space:]]+$OUTPUT\b" "$CANDIDATE"; then
+                    # Extract the package line
+                    PKG_LINE=$(grep -E "^[[:space:]]*package[[:space:]]+[^;]+;" "$CANDIDATE" || true)
+                    if [[ -z "$PKG_LINE" ]]; then
+                      echo "ERROR: Could not find package for message '$OUTPUT' in file '$CANDIDATE'"
+                      exit 1
+                    fi
+
+                    # Extract just the package name
+                    OUTPUT_PACKAGE=$(echo "$PKG_LINE" | sed -E 's/^[[:space:]]*package[[:space:]]+([^;]+);/\1/')
+                    break
+                  fi
+                done < <(find "$CURRENT_DFHACK_ROOT" -type f -name "*.proto")
+
+                if [[ -z "$OUTPUT_PACKAGE" ]]; then
+                  echo "ERROR: Could not locate message definition for '$OUTPUT' under $CURRENT_DFHACK_ROOT"
+                  exit 1
+                fi
+
+                ###############################################################
+                # WRITE RPC LINE WITH PACKAGE PREFIXES
+                ###############################################################
+                echo "  rpc $METHOD ($INPUT_PACKAGE.$INPUT) returns ($OUTPUT_PACKAGE.$OUTPUT);" >> "$OUTFILE"
+
               done <<< "$RPC_LINES"
+
               echo "}" >> "$OUTFILE"
               echo >> "$OUTFILE"
+
 
               # Write AFTER_IMPORTS
               echo "$AFTER_IMPORTS" >> "$OUTFILE"
