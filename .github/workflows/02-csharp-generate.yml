@@ -33,7 +33,7 @@ jobs:
           git pull origin main --rebase
 
       ###############################################################
-      # FIND ALL RPCPROTO FOLDERS ANYWHERE UNDER ANY dfhack-* FOLDER
+      # FIND ALL RPCPROTO FOLDERS ANYWHERE UNDER ANY dfhack-v* FOLDER
       # AND SELECT ONLY THOSE WHOSE SIBLING "Generated" FOLDER
       # IS MISSING OR EMPTY
       ###############################################################
@@ -43,12 +43,14 @@ jobs:
         run: |
           NEEDS_GEN=""
 
-          # Loop through all dfhack-* folders
-          for ROOT in dfhack-*; do
+          # Loop through all dfhack-v* folders
+          for ROOT in dfhack-v*; do
             [[ -d "$ROOT" ]] || continue
 
-            # Find rpcproto folders anywhere inside this dfhack-* folder
-            find "$ROOT" -type d -name rpcproto | while read RPCPROTO_PATH; do
+            # Find rpcproto folders anywhere inside this dfhack-v* folder
+            while read RPCPROTO_PATH; do
+              [[ -z "$RPCPROTO_PATH" ]] && continue
+
               OUTBASE=$(dirname "$RPCPROTO_PATH")
               GEN="$OUTBASE/Generated"
 
@@ -59,7 +61,8 @@ jobs:
               else
                 echo "Skipping $RPCPROTO_PATH (Generated exists and is not empty)"
               fi
-            done
+
+            done < <(find "$ROOT" -type d -name rpcproto)
           done
 
           if [[ -z "$NEEDS_GEN" ]]; then
@@ -70,9 +73,14 @@ jobs:
             echo "folders=$NEEDS_GEN" >> $GITHUB_OUTPUT
           fi
 
+
+
       - name: Stop if no C# generation is needed
         if: ${{ steps.folders.outputs.folders == 'none' }}
-        run: echo "No rpcproto folders require C# generation."
+        run: |
+          echo "No rpcproto folders require C# generation."
+          exit 0
+
 
       ###############################################################
       # INSTALL PROTOC + gRPC C# PLUGIN

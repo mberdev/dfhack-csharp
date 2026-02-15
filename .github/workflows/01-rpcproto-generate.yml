@@ -86,13 +86,16 @@ jobs:
 
       - name: Stop if no rpcproto generation is needed
         if: ${{ steps.folders.outputs.folders == 'none' }}
-        run: echo "No proto folders require rpcproto generation."
+        run: |
+          echo "No proto folders require rpcproto generation."
+          exit 0
 
       ###############################################################
       # GENERATE /rpcproto FOR ALL DETECTED FOLDERS
       ###############################################################
 
       - name: Generate rpcproto files
+        if: ${{ steps.folders.outputs.folders != 'none' }}
         run: |
           # Define missing imports (filename + import)
           MISSING_IMPORTS=(
@@ -143,15 +146,15 @@ jobs:
               # CASE 1: NO RPC LINES → JUST COPY WITH HEADER + OPTIONAL IMPORT
               ###############################################################
               if [[ -z "$RPC_LINES" ]]; then
-                echo $HEADER0 > "$OUTFILE"
-                echo $HEADER1 >> "$OUTFILE"
-                echo $HEADER2 >> "$OUTFILE"
-                echo $HEADER3 >> "$OUTFILE"
+                echo "$HEADER0" > "$OUTFILE"
+                echo "$HEADER1" >> "$OUTFILE"
+                echo "$HEADER2" >> "$OUTFILE"
+                echo "$HEADER3" >> "$OUTFILE"
+
+                LAST_IMPORT_LINE=$(grep -n '^import "' "$FILE" | tail -n 1 | cut -d: -f1)
 
                 if [[ -n "$EXTRA_IMPORT" ]]; then
                   echo "Added missing import \"$EXTRA_IMPORT_NAME\" to $BASENAME (See workflow variable MISSING_IMPORTS)"
-
-                  LAST_IMPORT_LINE=$(grep -n '^import "' "$FILE" | tail -n 1 | cut -d: -f1)
 
                   if [[ -n "$LAST_IMPORT_LINE" ]]; then
                     head -n "$LAST_IMPORT_LINE" "$FILE" >> "$OUTFILE"
@@ -172,44 +175,44 @@ jobs:
               # CASE 2: FILE HAS RPC LINES → FULL REWRITE WITH SERVICE BLOCK
               ###############################################################
 
-              FIRST_MESSAGE_LINE=$(grep -n -E '^[[:space:]]*message[[:space:]]+' "$FILE" | head -n 1 | cut -d: -f1)
+              echo "$HEADER0" > "$OUTFILE"
+              echo "$HEADER1" >> "$OUTFILE"
+              echo "$HEADER2" >> "$OUTFILE"
+              echo "$HEADER3" >> "$OUTFILE"
 
-              PREV_LINE=$((FIRST_MESSAGE_LINE - 1))
-              PREV_CONTENT=$(sed -n "${PREV_LINE}p" "$FILE")
+              # Split file into BEFORE_IMPORTS / IMPORT_BLOCK / AFTER_IMPORTS
+              IMPORT_LINES=$(grep -n '^import "' "$FILE" | cut -d: -f1)
 
-              if [[ "$PREV_CONTENT" =~ ^[[:space:]]*// ]]; then
-                INSERT_LINE=$PREV_LINE
+              if [[ -n "$IMPORT_LINES" ]]; then
+                FIRST_IMPORT=$(echo "$IMPORT_LINES" | head -n 1)
+                LAST_IMPORT=$(echo "$IMPORT_LINES" | tail -n 1)
+
+                BEFORE_IMPORTS=$(head -n $((FIRST_IMPORT - 1)) "$FILE")
+                IMPORT_BLOCK=$(sed -n "${FIRST_IMPORT},${LAST_IMPORT}p" "$FILE")
+                AFTER_IMPORTS=$(tail -n +"$((LAST_IMPORT + 1))" "$FILE")
               else
-                INSERT_LINE=$FIRST_MESSAGE_LINE
+                BEFORE_IMPORTS=$(cat "$FILE")
+                IMPORT_BLOCK=""
+                AFTER_IMPORTS=""
               fi
 
-              echo $HEADER0 > "$OUTFILE"
-              echo $HEADER1 >> "$OUTFILE"
-              echo $HEADER2 >> "$OUTFILE"
-              echo $HEADER3 >> "$OUTFILE"
+              # Write BEFORE_IMPORTS
+              echo "$BEFORE_IMPORTS" >> "$OUTFILE"
 
-              head -n $((INSERT_LINE - 1)) "$FILE" >> "$OUTFILE"
-              echo >> "$OUTFILE"
+              # Write IMPORT_BLOCK
+              if [[ -n "$IMPORT_BLOCK" ]]; then
+                echo "$IMPORT_BLOCK" >> "$OUTFILE"
+              fi
 
-              ###############################################################
-              # INSERT MISSING IMPORT IF NEEDED (AFTER EXISTING IMPORTS)
-              ###############################################################
+              # Insert missing import
               if [[ -n "$EXTRA_IMPORT" ]]; then
                 echo "Added missing import \"$EXTRA_IMPORT_NAME\" to $BASENAME"
-
-                LAST_IMPORT_LINE=$(grep -n '^import "' "$FILE" | tail -n 1 | cut -d: -f1)
-
-                if [[ -n "$LAST_IMPORT_LINE" ]]; then
-                  head -n "$LAST_IMPORT_LINE" "$FILE" >> "$OUTFILE"
-                  echo "$EXTRA_IMPORT" >> "$OUTFILE"
-                  tail -n +"$((LAST_IMPORT_LINE+1))" "$FILE" >> "$OUTFILE"
-                else
-                  echo "$EXTRA_IMPORT" >> "$OUTFILE"
-                fi
-
-                echo >> "$OUTFILE"
+                echo "$EXTRA_IMPORT" >> "$OUTFILE"
               fi
 
+              echo >> "$OUTFILE"
+
+              # Insert service block
               echo "service RpcService {" >> "$OUTFILE"
               while read -r LINE; do
                 METHOD=$(echo "$LINE" | sed -E 's|.*RPC ([^: ]+).*|\1|')
@@ -220,7 +223,8 @@ jobs:
               echo "}" >> "$OUTFILE"
               echo >> "$OUTFILE"
 
-              tail -n +"$INSERT_LINE" "$FILE" >> "$OUTFILE"
+              # Write AFTER_IMPORTS
+              echo "$AFTER_IMPORTS" >> "$OUTFILE"
 
             done
 
@@ -231,6 +235,7 @@ jobs:
       ###############################################################
 
       - name: Commit updates
+        if: ${{ steps.folders.outputs.folders != 'none' }}
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
