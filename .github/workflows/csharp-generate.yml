@@ -1,8 +1,8 @@
-name: Generate C# After Proto Sync
+name: Generate C# After Generate rpcproto
 
 on:
   workflow_run:
-    workflows: ["Monthly Proto Sync"]
+    workflows: ["Generate rpcproto After DFHack Proto Sync"]
     types:
       - completed
 
@@ -22,38 +22,46 @@ jobs:
           fetch-depth: 2   # Needed so we can diff against previous commit
 
       ###############################################################
-      # DETERMINE LATEST VERSION FOLDER
+      # FIND ALL RPCPROTO FOLDERS ANYWHERE UNDER ANY dfhack-* FOLDER
+      # AND SELECT ONLY THOSE WHOSE SIBLING "Generated" FOLDER
+      # IS MISSING OR EMPTY
       ###############################################################
 
-      - name: Determine latest DFHack version folder
-        id: version
+      - name: Find rpcproto folders needing C# generation
+        id: folders
         run: |
-          VERSION_FOLDER=$(ls -d dfhack-* | sort -V | tail -n 1)
-          echo "folder=$VERSION_FOLDER" >> $GITHUB_OUTPUT
-          echo "Detected version folder: $VERSION_FOLDER"
+          NEEDS_GEN=""
 
-      ###############################################################
-      # DETERMINE IF ANY RPCPROTO FILES CHANGED
-      ###############################################################
+          # Loop through all dfhack-* folders
+          for ROOT in dfhack-*; do
+            [[ -d "$ROOT" ]] || continue
 
-      - name: Check for rpcproto changes
-        id: changes
-        run: |
-          VERSION_FOLDER="${{ steps.version.outputs.folder }}"
+            # Find rpcproto folders anywhere inside this dfhack-* folder
+            find "$ROOT" -type d -name rpcproto | while read RPCPROTO_PATH; do
+              OUTBASE=$(dirname "$RPCPROTO_PATH")
+              GEN="$OUTBASE/Generated"
 
-          # Detect changes in any rpcproto folder inside the version folder
-          if git diff --quiet HEAD^ HEAD -- "$VERSION_FOLDER"/*/rpcproto; then
-            echo "changed=false" >> $GITHUB_OUTPUT
-            echo "No rpcproto changes detected"
+              # Check if Generated folder is missing or empty
+              if [[ ! -d "$GEN" ]] || [[ -z "$(ls -A "$GEN" 2>/dev/null)" ]]; then
+                echo "Will generate C# for: $RPCPROTO_PATH"
+                NEEDS_GEN="$NEEDS_GEN $RPCPROTO_PATH"
+              else
+                echo "Skipping $RPCPROTO_PATH (Generated exists and is not empty)"
+              fi
+            done
+          done
+
+          if [[ -z "$NEEDS_GEN" ]]; then
+            echo "none" > rpcproto_list.txt
+            echo "folders=none" >> $GITHUB_OUTPUT
           else
-            echo "changed=true" >> $GITHUB_OUTPUT
-            echo "rpcproto changes detected"
+            echo "$NEEDS_GEN" > rpcproto_list.txt
+            echo "folders=$NEEDS_GEN" >> $GITHUB_OUTPUT
           fi
 
-      # Stop early if nothing changed
       - name: Stop if no C# generation is needed
-        if: ${{ steps.changes.outputs.changed != 'true' }}
-        run: echo "Skipping C# generation because no rpcproto changes were detected."
+        if: ${{ steps.folders.outputs.folders == 'none' }}
+        run: echo "No rpcproto folders require C# generation."
 
       ###############################################################
       # INSTALL PROTOC + gRPC C# PLUGIN
@@ -76,15 +84,14 @@ jobs:
           which grpc_csharp_plugin
 
       ###############################################################
-      # GENERATE C# FILES FOR ALL RPCPROTO FOLDERS
+      # GENERATE C# FILES FOR EACH rpcproto FOLDER THAT NEEDS IT
       ###############################################################
 
       - name: Generate C# files
         run: |
-          VERSION_FOLDER="${{ steps.version.outputs.folder }}"
+          for RPCPROTO_PATH in $(cat rpcproto_list.txt); do
+            [[ "$RPCPROTO_PATH" == "none" ]] && continue
 
-          # Find all rpcproto folders inside the version folder
-          find "$VERSION_FOLDER" -type d -name rpcproto | while read RPCPROTO_PATH; do
             OUTBASE=$(dirname "$RPCPROTO_PATH")
 
             echo "Generating C# for:"
@@ -112,6 +119,5 @@ jobs:
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add .
-          git commit -m "Generated C# files (messages + gRPC stubs) after rpcproto changes in ${{ steps.version.outputs.folder }}" || echo "No changes to commit"
+          git commit -m "Generated C# files (messages + gRPC stubs) for all rpcproto folders missing Generated output" || echo "No changes to commit"
           git push
-          
