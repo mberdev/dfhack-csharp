@@ -213,7 +213,8 @@ jobs:
               echo >> "$OUTFILE"
 
               # Insert service block
-              echo "service RpcService {" >> "$OUTFILE"
+              SERVICE_NAME="$(basename "$FILE" .proto)RpcService"
+              echo "service $SERVICE_NAME {" >> "$OUTFILE"
               while read -r LINE; do
                 METHOD=$(echo "$LINE" | sed -E 's|.*RPC ([^: ]+).*|\1|')
                 INPUT=$(echo "$LINE"  | sed -E 's|.*: ([^ ]+) ->.*|\1|')
