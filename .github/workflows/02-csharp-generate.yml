@@ -81,18 +81,30 @@ jobs:
       - name: Install protoc and gRPC C# plugin
         run: |
           PROTOC_VERSION="27.2"
+
+          # Install protoc
           curl -L -o protoc.zip \
             "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip"
           sudo apt-get update
-          sudo apt-get install -y unzip grpc-tools
+          sudo apt-get install -y unzip
           sudo unzip protoc.zip -d /usr/local
           rm protoc.zip
 
-          echo "protoc version:"
-          protoc --version
 
-          echo "grpc_csharp_plugin path:"
-          which grpc_csharp_plugin
+
+          # # Install grpc_csharp_plugin
+          # GRPC_VERSION="1.62.0"
+          # curl -L -o grpc.zip \
+          #   "https://github.com/grpc/grpc/releases/download/v${GRPC_VERSION}/grpc-${GRPC_VERSION}-linux-x64.zip"
+          # sudo unzip grpc.zip -d /usr/local
+          # rm grpc.zip
+
+          # echo "protoc version:"
+          # protoc --version
+
+          # echo "grpc_csharp_plugin path:"
+          # which grpc_csharp_plugin
+
 
       ###############################################################
       # GENERATE C# FILES FOR EACH rpcproto FOLDER THAT NEEDS IT
@@ -115,8 +127,8 @@ jobs:
             protoc \
               --proto_path="$RPCPROTO_PATH" \
               --csharp_out="$OUTBASE/Generated" \
-              --grpc_out="$OUTBASE/Generated" \
-              --plugin=protoc-gen-grpc=$(which grpc_csharp_plugin) \
+              # --grpc_out="$OUTBASE/Generated" \
+              # --plugin=protoc-gen-grpc=$(which grpc_csharp_plugin) \
               "$RPCPROTO_PATH"/*.proto
 
           done
