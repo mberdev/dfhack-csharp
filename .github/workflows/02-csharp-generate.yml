@@ -100,10 +100,10 @@ jobs:
 
 
           # Install grpc_csharp_plugin
-          GRPC_VERSION="1.62.0"
+          GRPC_VERSION="1.62.2"
 
           curl -L -o grpc.zip \
-            "https://github.com/grpc/grpc/releases/download/v${GRPC_VERSION}/protoc-gen-grpc-csharp-linux-x64.zip"
+            "https://github.com/grpc/grpc/archive/refs/tags/v${GRPC_VERSION}.zip"
 
           sudo unzip grpc.zip -d /usr/local
           rm grpc.zip
