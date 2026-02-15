@@ -33,7 +33,7 @@ jobs:
           protoc --version
 
       ###############################################################
-      # DETECT ALL /proto FOLDERS ANYWHERE UNDER dfhack-vXXX
+      # DETECT ALL /proto FOLDERS ANYWHERE UNDER dfhack-v*
       # AND CHECK WHETHER THEIR SIBLING /rpcproto FOLDER
       # IS MISSING OR EMPTY
       ###############################################################
@@ -80,6 +80,10 @@ jobs:
 
       - name: Generate rpcproto files
         run: |
+          # Define missing imports (filename + import)
+          MISSING_IMPORTS=(
+            "BasicApi.proto CoreProtocol.proto"
+          )
 
           for PROTO_PATH in $(cat proto_list.txt); do
             [[ "$PROTO_PATH" == "none" ]] && continue
