@@ -99,13 +99,15 @@ jobs:
           rm protoc.zip
 
 
-
           # Install grpc_csharp_plugin
           GRPC_VERSION="1.62.0"
+
           curl -L -o grpc.zip \
-            "https://github.com/grpc/grpc/releases/download/v${GRPC_VERSION}/grpc-${GRPC_VERSION}-linux-x64.zip"
+            "https://github.com/grpc/grpc/releases/download/v${GRPC_VERSION}/protoc-gen-grpc-csharp-linux-x64.zip"
+
           sudo unzip grpc.zip -d /usr/local
           rm grpc.zip
+
 
           echo "protoc version:"
           protoc --version
