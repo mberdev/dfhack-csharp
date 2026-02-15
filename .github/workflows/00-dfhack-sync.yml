@@ -1,4 +1,4 @@
-name: Monthly DFHack Proto Sync
+name: 00 (AUTO) Monthly DFHack Proto Sync
 
 on:
   schedule:

@@ -1,8 +1,8 @@
-name: Generate rpcproto After DFHack Proto Sync
+name: 01 (TRIGGERED) Generate rpcproto After DFHack Proto Sync
 
 on:
   workflow_run:
-    workflows: ["Monthly DFHack Proto Sync"]
+    workflows: ["00 (AUTO) Monthly DFHack Proto Sync"]
     types:
       - completed
 
@@ -135,7 +135,7 @@ jobs:
                 echo $HEADER3 >> "$OUTFILE"
 
                 if [[ -n "$EXTRA_IMPORT" ]]; then
-                  echo "Added missing import \"$EXTRA_IMPORT_NAME\" to $BASENAME"
+                  echo "Added missing import \"$EXTRA_IMPORT_NAME\" to $BASENAME (See workflow variable MISSING_IMPORTS)"
 
                   LAST_IMPORT_LINE=$(grep -n '^import "' "$FILE" | tail -n 1 | cut -d: -f1)
 

@@ -1,8 +1,8 @@
-name: Generate C# After Generate rpcproto
+name: 02 (TRIGGERED) Generate C# After Generate rpcproto
 
 on:
   workflow_run:
-    workflows: ["Generate rpcproto After DFHack Proto Sync"]
+    workflows: ["01 (TRIGGERED) Generate rpcproto After DFHack Proto Sync"]
     types:
       - completed
 
