@@ -101,8 +101,20 @@ jobs:
           MISSING_IMPORTS=(
             "BasicApi.proto CoreProtocol.proto"
             "RemoteFortressReader.proto CoreProtocol.proto"
-            "AdventureControl.proto RemoteFortressReader.proto"
+            "RemoteFortressReader.proto AdventureControl.proto"
           )
+
+          # Define RPC commands to exclude from generation (until AdventureControl and RemoteFortressReader fix their cyclic types dependency)
+          COMMANDS_TO_EXCLUDE=(
+            "MoveCommand"
+            "JumpCommand"
+            "MenuQuery"
+            "MovementSelectCommand"
+            "MiscMoveCommand"
+            "GetLanguage"
+            "GetGameValidity"
+          )
+
 
           for PROTO_PATH in $(cat proto_list.txt); do
             [[ "$PROTO_PATH" == "none" ]] && continue
@@ -315,9 +327,26 @@ jobs:
                 fi
 
                 ###############################################################
-                # WRITE RPC LINE WITH PACKAGE PREFIXES
+                # WRITE RPC LINE WITH PACKAGE PREFIXES (WITH EXCLUSION SUPPORT)
                 ###############################################################
-                echo "  rpc $METHOD ($INPUT_PACKAGE.$INPUT) returns ($OUTPUT_PACKAGE.$OUTPUT);" >> "$OUTFILE"
+
+                # Check if METHOD is in COMMANDS_TO_EXCLUDE
+                EXCLUDED="false"
+                for EX in "${COMMANDS_TO_EXCLUDE[@]}"; do
+                  if [[ "$EX" == "$METHOD" ]]; then
+                    EXCLUDED="true"
+                    break
+                  fi
+                done
+
+                if [[ "$EXCLUDED" == "true" ]]; then
+                  # Commented-out RPC line
+                  echo "  # rpc $METHOD ($INPUT_PACKAGE.$INPUT) returns ($OUTPUT_PACKAGE.$OUTPUT);  # Command manually excluded (see COMMANDS_TO_EXCLUDE)" >> "$OUTFILE"
+                else
+                  # Normal RPC line
+                  echo "  rpc $METHOD ($INPUT_PACKAGE.$INPUT) returns ($OUTPUT_PACKAGE.$OUTPUT);" >> "$OUTFILE"
+                fi
+
 
               done <<< "$RPC_LINES"
 
