@@ -1,1 +1,1 @@
-none
+ dfhack-v0.40.24-r5/dfhack/proto dfhack-v0.40.24-r5/remotefortressreader/proto
