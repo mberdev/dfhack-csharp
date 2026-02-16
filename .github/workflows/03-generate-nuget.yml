@@ -65,6 +65,7 @@ jobs:
               echo "    <Description>Auto-generated NuGet package for ${ROOT}</Description>"
               echo "    <PackageOutputPath>../nuget</PackageOutputPath>"
               echo "    <IncludeBuildOutput>false</IncludeBuildOutput>"
+              echo "    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>"
               echo "  </PropertyGroup>"
               echo ""
               echo "  <ItemGroup>"
