@@ -74,11 +74,16 @@ jobs:
               echo "  </ItemGroup>"
               echo ""
               echo "  <ItemGroup>"
-              echo "    <Compile Include=\"${ROOT}/**/*.cs\" Pack=\"true\" PackagePath=\"contentFiles/cs/any/${ROOT}/\" />"
+              echo "    <Content Include=\"${ROOT}/**/*.cs\">"
+              echo "      <Pack>true</Pack>"
+              echo "      <PackagePath>contentFiles/cs/any/${ROOT}/</PackagePath>"
+              echo "      <BuildAction>Compile</BuildAction>"
+              echo "    </Content>"
               echo "    <None Include=\"${ROOT}/**/*\" Exclude=\"${ROOT}/**/*.cs\" Pack=\"true\" PackagePath=\"${ROOT}/\" />"
               echo "  </ItemGroup>"
               echo "</Project>"
             } > "$TMPDIR/${PKG_NAME}.csproj"
+
 
             dotnet pack "$TMPDIR/${PKG_NAME}.csproj" --configuration Release
 
