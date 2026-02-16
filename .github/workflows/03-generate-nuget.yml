@@ -69,6 +69,7 @@ jobs:
               echo ""
               echo "  <ItemGroup>"
               echo "    <PackageReference Include=\"Google.Protobuf\" Version=\"3.25.3\" />"
+              echo "    <PackageReference Include=\"Grpc.Core\" Version=\"2.46.6\" />"
               echo "  </ItemGroup>"
               echo ""
               echo "  <ItemGroup>"
