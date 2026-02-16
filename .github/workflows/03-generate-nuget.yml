@@ -55,7 +55,6 @@ jobs:
 
             cp -r "$ROOT" "$TMPDIR/"
 
-            # Create the .csproj file line by line
             {
               echo "<Project Sdk=\"Microsoft.NET.Sdk\">"
               echo "  <PropertyGroup>"
@@ -79,12 +78,16 @@ jobs:
               echo "</Project>"
             } > "$TMPDIR/${PKG_NAME}.csproj"
 
-
-
             dotnet pack "$TMPDIR/${PKG_NAME}.csproj" --configuration Release
 
             rm -rf "$TMPDIR"
           done
+
+      - name: Move generated NuGet packages into repo folder
+        run: |
+          mkdir -p nuget
+          find . -name "*.nupkg" -exec cp {} nuget/ \;
+
 
       - name: Commit generated NuGet packages
         run: |
