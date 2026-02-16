@@ -110,17 +110,17 @@ jobs:
 
           # Extract only the Linux x64 plugin
           unzip -j Grpc.Tools.nupkg \
-            "tools/linux_x64/protoc-gen-grpc-csharp" \
+            "tools/linux_x64/grpc_csharp_plugin" \
             -d /usr/local/bin/
 
           # Make it executable
-          sudo chmod +x /usr/local/bin/protoc-gen-grpc-csharp
+          sudo chmod +x /usr/local/bin/grpc_csharp_plugin
 
           # Clean up
           rm Grpc.Tools.nupkg
 
           echo "grpc_csharp_plugin installed at:"
-          which protoc-gen-grpc-csharp
+          which grpc_csharp_plugin
 
 
 
@@ -150,7 +150,7 @@ jobs:
               --proto_path="$DFHACK_PATH" \
               --csharp_out="$OUTBASE/csharp" \
               --grpc_out="$OUTBASE/csharp" \
-              --plugin=protoc-gen-grpc=$(which protoc-gen-grpc-csharp) \
+              --plugin=protoc-gen-grpc=$(which grpc_csharp_plugin) \
               "$RPCPROTO_PATH"/*.proto
 
 
