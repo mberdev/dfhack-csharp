@@ -68,10 +68,15 @@ jobs:
               echo "  </PropertyGroup>"
               echo ""
               echo "  <ItemGroup>"
+              echo "    <PackageReference Include=\"Google.Protobuf\" Version=\"3.25.3\" />"
+              echo "  </ItemGroup>"
+              echo ""
+              echo "  <ItemGroup>"
               echo "    <None Include=\"${ROOT}/**/*\" Pack=\"true\" PackagePath=\"${ROOT}/\" />"
               echo "  </ItemGroup>"
               echo "</Project>"
             } > "$TMPDIR/${PKG_NAME}.csproj"
+
 
 
             dotnet pack "$TMPDIR/${PKG_NAME}.csproj" --configuration Release
