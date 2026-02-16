@@ -54,22 +54,24 @@ jobs:
 
             cp -r "$ROOT" "$TMPDIR/"
 
-            cat > "$TMPDIR/${PKG_NAME}.csproj" <<EOF
-            <Project Sdk="Microsoft.NET.Sdk">
-              <PropertyGroup>
-                <PackageId>${PKG_NAME}</PackageId>
-                <Version>${VERSION}</Version>
-                <Authors>DFHack Auto Generator</Authors>
-                <Description>Auto-generated NuGet package for ${ROOT}</Description>
-                <PackageOutputPath>../nuget</PackageOutputPath>
-                <IncludeBuildOutput>false</IncludeBuildOutput>
-              </PropertyGroup>
+            # Create the .csproj file line by line
+            {
+              echo "<Project Sdk=\"Microsoft.NET.Sdk\">"
+              echo "  <PropertyGroup>"
+              echo "    <PackageId>${PKG_NAME}</PackageId>"
+              echo "    <Version>${VERSION}</Version>"
+              echo "    <Authors>DFHack Auto Generator</Authors>"
+              echo "    <Description>Auto-generated NuGet package for ${ROOT}</Description>"
+              echo "    <PackageOutputPath>../nuget</PackageOutputPath>"
+              echo "    <IncludeBuildOutput>false</IncludeBuildOutput>"
+              echo "  </PropertyGroup>"
+              echo ""
+              echo "  <ItemGroup>"
+              echo "    <None Include=\"${ROOT}/**/*\" Pack=\"true\" PackagePath=\"${ROOT}/\" />"
+              echo "  </ItemGroup>"
+              echo "</Project>"
+            } > "$TMPDIR/${PKG_NAME}.csproj"
 
-              <ItemGroup>
-                <None Include="${ROOT}/**/*" Pack="true" PackagePath="${ROOT}/" />
-              </ItemGroup>
-            </Project>
-            EOF
 
             dotnet pack "$TMPDIR/${PKG_NAME}.csproj" --configuration Release
 
