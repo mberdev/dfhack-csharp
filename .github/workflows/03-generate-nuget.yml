@@ -55,21 +55,21 @@ jobs:
             cp -r "$ROOT" "$TMPDIR/"
 
             cat > "$TMPDIR/${PKG_NAME}.csproj" <<EOF
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <PackageId>${PKG_NAME}</PackageId>
-    <Version>${VERSION}</Version>
-    <Authors>DFHack Auto Generator</Authors>
-    <Description>Auto-generated NuGet package for ${ROOT}</Description>
-    <PackageOutputPath>../nuget</PackageOutputPath>
-    <IncludeBuildOutput>false</IncludeBuildOutput>
-  </PropertyGroup>
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <PackageId>${PKG_NAME}</PackageId>
+                <Version>${VERSION}</Version>
+                <Authors>DFHack Auto Generator</Authors>
+                <Description>Auto-generated NuGet package for ${ROOT}</Description>
+                <PackageOutputPath>../nuget</PackageOutputPath>
+                <IncludeBuildOutput>false</IncludeBuildOutput>
+              </PropertyGroup>
 
-  <ItemGroup>
-    <None Include="${ROOT}/**/*" Pack="true" PackagePath="${ROOT}/" />
-  </ItemGroup>
-</Project>
-EOF
+              <ItemGroup>
+                <None Include="${ROOT}/**/*" Pack="true" PackagePath="${ROOT}/" />
+              </ItemGroup>
+            </Project>
+            EOF
 
             dotnet pack "$TMPDIR/${PKG_NAME}.csproj" --configuration Release
 
