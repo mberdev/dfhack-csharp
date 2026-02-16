@@ -101,17 +101,27 @@ jobs:
           echo "protoc version:"
           protoc --version
 
-          # # Install grpc_csharp_plugin
-          # GRPC_VERSION="1.62.2"
+          # Install grpc_csharp_plugin from Grpc.Tools NuGet package
+          GRPC_VERSION="2.62.0"   # or whichever version you want
 
-          # curl -L -o grpc.zip \
-          #   "https://github.com/grpc/grpc/archive/refs/tags/v${GRPC_VERSION}.zip"
+          # Download the NuGet package (it's just a ZIP file)
+          curl -L -o Grpc.Tools.nupkg \
+            "https://www.nuget.org/api/v2/package/Grpc.Tools/${GRPC_VERSION}"
 
-          # sudo unzip grpc.zip -d /usr/local
-          # rm grpc.zip
+          # Extract only the Linux x64 plugin
+          unzip -j Grpc.Tools.nupkg \
+            "tools/linux_x64/protoc-gen-grpc-csharp" \
+            -d /usr/local/bin/
 
-          # echo "grpc_csharp_plugin path:"
-          # which grpc_csharp_plugin
+          # Make it executable
+          sudo chmod +x /usr/local/bin/protoc-gen-grpc-csharp
+
+          # Clean up
+          rm Grpc.Tools.nupkg
+
+          echo "grpc_csharp_plugin installed at:"
+          which protoc-gen-grpc-csharp
+
 
 
       ###############################################################
@@ -139,9 +149,10 @@ jobs:
               --proto_path="$RPCPROTO_PATH" \
               --proto_path="$DFHACK_PATH" \
               --csharp_out="$OUTBASE/csharp" \
+              --grpc_out="$OUTBASE/csharp" \
+              --plugin=protoc-gen-grpc=$(which protoc-gen-grpc-csharp) \
               "$RPCPROTO_PATH"/*.proto
-              # --grpc_out="$OUTBASE/csharp" \
-              # --plugin=protoc-gen-grpc=$(which grpc_csharp_plugin) \
+
 
           done
 
