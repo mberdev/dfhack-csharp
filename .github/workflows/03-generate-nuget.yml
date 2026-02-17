@@ -51,10 +51,12 @@ jobs:
 
             TMPDIR="tmp_nuget_${ROOT}"
             rm -rf "$TMPDIR"
-            mkdir -p "$TMPDIR"
+            mkdir -p "$TMPDIR/src"
 
-            cp -r "$ROOT" "$TMPDIR/"
+            # Copy only .cs files into src/
+            find "$ROOT" -name "*.cs" -exec cp --parents {} "$TMPDIR/src/" \;
 
+            # Generate .csproj
             {
               echo "<Project Sdk=\"Microsoft.NET.Sdk\">"
               echo "  <PropertyGroup>"
@@ -64,7 +66,11 @@ jobs:
               echo "    <Authors>DFHack Auto Generator</Authors>"
               echo "    <Description>Auto-generated NuGet package for ${ROOT}</Description>"
               echo "    <PackageOutputPath>../nuget</PackageOutputPath>"
-              echo "    <IncludeBuildOutput>false</IncludeBuildOutput>"
+              echo ""
+              echo "    <!-- Required for Visual Studio + Unity compatibility -->"
+              echo "    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>"
+              echo "    <AssemblyName>${PKG_NAME}</AssemblyName>"
+              echo "    <RootNamespace>${PKG_NAME}</RootNamespace>"
               echo "    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>"
               echo "  </PropertyGroup>"
               echo ""
@@ -74,21 +80,17 @@ jobs:
               echo "  </ItemGroup>"
               echo ""
               echo "  <ItemGroup>"
-              echo "    <Content Include=\"${ROOT}/**/*.cs\">"
-              echo "      <Pack>true</Pack>"
-              echo "      <PackagePath>contentFiles/cs/any/${ROOT}/</PackagePath>"
-              echo "      <BuildAction>Compile</BuildAction>"
-              echo "    </Content>"
-              echo "    <None Include=\"${ROOT}/**/*\" Exclude=\"${ROOT}/**/*.cs\" Pack=\"true\" PackagePath=\"${ROOT}/\" />"
+              echo "    <Compile Include=\"src/**/*.cs\" />"
               echo "  </ItemGroup>"
               echo "</Project>"
             } > "$TMPDIR/${PKG_NAME}.csproj"
 
-
+            # Build + pack
             dotnet pack "$TMPDIR/${PKG_NAME}.csproj" --configuration Release
 
             rm -rf "$TMPDIR"
           done
+
 
       - name: Move generated NuGet packages into repo folder
         run: |
