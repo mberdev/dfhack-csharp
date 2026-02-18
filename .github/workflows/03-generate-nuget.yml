@@ -81,6 +81,7 @@ jobs:
               echo ""
               echo "  <ItemGroup>"
               echo "    <Compile Include=\"src/**/*.cs\" />"
+              echo "    <None Include=\"src/**/*.cs\" Pack=\"true\" PackagePath=\"src/\" />"
               echo "  </ItemGroup>"
               echo "</Project>"
             } > "$TMPDIR/${PKG_NAME}.csproj"
