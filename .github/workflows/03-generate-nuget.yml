@@ -54,7 +54,10 @@ jobs:
             mkdir -p "$TMPDIR/src"
 
             # Copy only .cs files into src/
-            find "$ROOT" -name "*.cs" -exec cp --parents {} "$TMPDIR/src/" \;
+            (
+              cd "$ROOT"
+              find . -name "*.cs" -exec cp --parents {} "../$TMPDIR/src/" \;
+            )
 
             # Generate .csproj
             {
