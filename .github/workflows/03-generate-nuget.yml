@@ -86,7 +86,8 @@ jobs:
             } > "$TMPDIR/${PKG_NAME}.csproj"
 
             # Build + pack
-            dotnet pack "$TMPDIR/${PKG_NAME}.csproj" --configuration Release
+            dotnet build "$TMPDIR/${PKG_NAME}.csproj" --configuration Release
+            dotnet pack "$TMPDIR/${PKG_NAME}.csproj" --configuration Release --no-build
 
             rm -rf "$TMPDIR"
           done
