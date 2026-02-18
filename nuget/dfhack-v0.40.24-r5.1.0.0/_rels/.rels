@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  <Relationship Type="http://schemas.microsoft.com/packaging/2010/07/manifest" Target="/dfhack-v0.40.24-r5.nuspec" Id="R7FB7A2DFB67DD5AE" />
-  <Relationship Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="/package/services/metadata/core-properties/4ac7bc8da8c7428185642e5f0396239a.psmdcp" Id="RF445148D1A41C0BA" />
-</Relationships>
