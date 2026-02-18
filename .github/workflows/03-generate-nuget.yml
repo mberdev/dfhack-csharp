@@ -70,7 +70,6 @@ jobs:
               echo "    <!-- Required for Visual Studio + Unity compatibility -->"
               echo "    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>"
               echo "    <AssemblyName>${PKG_NAME}</AssemblyName>"
-              echo "    <RootNamespace>${PKG_NAME}</RootNamespace>"
               echo "    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>"
               echo "  </PropertyGroup>"
               echo ""
