@@ -49,17 +49,22 @@ jobs:
             PKG_NAME="${ROOT}"
             VERSION="1.0.0"
 
+            # Create per-folder nuget output directory
+            mkdir -p "$ROOT/nuget"
+
             TMPDIR="tmp_nuget_${ROOT}"
             rm -rf "$TMPDIR"
             mkdir -p "$TMPDIR/src"
 
-            # Copy only .cs files into src/
+            # Copy .cs files into src/ with correct relative paths
             (
               cd "$ROOT"
               find . -name "*.cs" -exec cp --parents {} "../$TMPDIR/src/" \;
             )
 
-            # Generate .csproj
+            # Generate .csproj INSIDE TMPDIR
+            CSProjPath="$TMPDIR/${PKG_NAME}.csproj"
+
             {
               echo "<Project Sdk=\"Microsoft.NET.Sdk\">"
               echo "  <PropertyGroup>"
@@ -68,7 +73,7 @@ jobs:
               echo "    <Version>${VERSION}</Version>"
               echo "    <Authors>DFHack Auto Generator</Authors>"
               echo "    <Description>Auto-generated NuGet package for ${ROOT}</Description>"
-              echo "    <PackageOutputPath>../nuget</PackageOutputPath>"
+              echo "    <PackageOutputPath>./nuget</PackageOutputPath>"
               echo ""
               echo "    <!-- Required for Visual Studio + Unity compatibility -->"
               echo "    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>"
@@ -86,27 +91,37 @@ jobs:
               echo "    <None Include=\"src/**/*.cs\" Pack=\"true\" PackagePath=\"src/\" />"
               echo "  </ItemGroup>"
               echo "</Project>"
-            } > "$TMPDIR/${PKG_NAME}.csproj"
+            } > "$CSProjPath"
 
-            # Build + pack
-            dotnet build "$TMPDIR/${PKG_NAME}.csproj" --configuration Release
-            dotnet pack "$TMPDIR/${PKG_NAME}.csproj" --configuration Release --no-build
+            # Copy the generated .csproj back into the ROOT folder (persist it)
+            cp "$CSProjPath" "$ROOT/${PKG_NAME}.csproj"
+
+            # Build + pack inside TMPDIR
+            (
+              cd "$TMPDIR"
+              dotnet build "${PKG_NAME}.csproj" --configuration Release
+              dotnet pack "${PKG_NAME}.csproj" --configuration Release --no-build
+            )
+
+            # Move the generated .nupkg into ROOT/nuget/
+            find "$TMPDIR" -name "*.nupkg" -exec mv {} "$ROOT/nuget/" \;
 
             rm -rf "$TMPDIR"
           done
 
 
-      - name: Move generated NuGet packages into repo folder
-        run: |
-          mkdir -p nuget
-          find . -name "*.nupkg" -exec cp {} nuget/ \;
 
-
-      - name: Commit generated NuGet packages
+      - name: Commit generated files
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git add -f nuget/*.nupkg
-          git commit -m "Generated NuGet packages for all dfhack-v* folders" || echo "No changes to commit"
+
+          # Add all new or modified files inside dfhack-v*/ folders
+          git add -A dfhack-v*/ 
+
+          # Commit if there are changes
+          git commit -m "Persisted .csproj files and generated NuGet packages" || echo "No changes to commit"
+
           git push
+
 
