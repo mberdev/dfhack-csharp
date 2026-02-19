@@ -50,9 +50,9 @@ jobs:
             VERSION="1.0.0"
 
             # Ensure folder structure exists
+            mkdir -p "$ROOT/csharp"
             mkdir -p "$ROOT/csharp/dfhack-csharp"
             mkdir -p "$ROOT/csharp/dfhack-csharp/src"
-            mkdir -p "$ROOT/csharp"
 
             # Create .csproj
             CSProjPath="$ROOT/csharp/dfhack-csharp/${PKG_NAME}.csproj"
@@ -81,13 +81,14 @@ jobs:
               echo "</Project>"
             } > "$CSProjPath"
 
-            # Create .sln
+            # Generate .sln at $ROOT/csharp/ referencing the .csproj
             (
               set -x
               cd "$ROOT/csharp"
               dotnet new sln -n "${PKG_NAME}" --force
               dotnet sln "${PKG_NAME}.sln" add "dfhack-csharp/${PKG_NAME}.csproj"
             )
+
 
           done
 
