@@ -50,6 +50,7 @@ jobs:
             # Find all subdirs under the rpcproto folder
             while read RPCPROTO_PATH; do
               [[ -z "$RPCPROTO_PATH" ]] && continue
+              [[ "$RPCPROTO_PATH" == "$ROOT/rpcproto" ]] && continue
 
               PLUGIN=$(basename "$RPCPROTO_PATH")
               GEN="$ROOT/csharp/$PLUGIN"

@@ -61,6 +61,7 @@ jobs:
             # Find all subdirs under the proto folder
             while read PROTO_PATH; do
               [[ -z "$PROTO_PATH" ]] && continue
+              [[ "$PROTO_PATH" == "$ROOT/proto" ]] && continue
 
               PLUGIN=$(basename "$PROTO_PATH")
               RPCPROTO="$ROOT/rpcproto/$PLUGIN"
