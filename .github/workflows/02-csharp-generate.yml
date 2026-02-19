@@ -138,7 +138,7 @@ jobs:
             ROOT=$(dirname $(dirname "$RPCPROTO_PATH"))
 
             DFHACK_PATH="$ROOT/rpcproto/dfhack"
-            CSHARP_OUT="$ROOT/csharp/$PLUGIN"
+            CSHARP_OUT="$ROOT/csharp/src/$PLUGIN"
 
             echo "Generating C# for:"
             echo "  Input proto folder:   $RPCPROTO_PATH"
@@ -156,8 +156,8 @@ jobs:
               --plugin=protoc-gen-grpc=$(which grpc_csharp_plugin) \
               "$RPCPROTO_PATH"/*.proto
 
-
           done
+
 
       ###############################################################
       # COMMIT RESULTS
