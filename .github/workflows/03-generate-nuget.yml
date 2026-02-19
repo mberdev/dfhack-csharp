@@ -35,29 +35,27 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
-      - name: Generate NuGet packages for each dfhack-v* folder
+      #######################################################################
+      # 1. GENERATE ALL .csproj AND .sln FILES FIRST (NO PACKING YET)
+      #######################################################################
+      - name: Generate project + solution files
         run: |
           set -x
 
           for ROOT in dfhack-v*; do
             [[ -d "$ROOT" ]] || continue
-
             echo "Processing $ROOT..."
 
             PKG_NAME="${ROOT}"
             VERSION="1.0.0"
 
-            mkdir -p "$ROOT/csharp/dfhack-csharp/nuget"
+            # Ensure folder structure exists
+            mkdir -p "$ROOT/csharp/dfhack-csharp"
+            mkdir -p "$ROOT/csharp/dfhack-csharp/src"
+            mkdir -p "$ROOT/csharp"
 
-            TMPDIR="tmp_nuget_${ROOT}"
-            rm -rf "$TMPDIR"
-            mkdir -p "$TMPDIR/src"
-
-            cp -r "$ROOT/csharp/dfhack-csharp/src/." "$TMPDIR/src/"
-
-            CSProjDir="$TMPDIR/dfhack-csharp"
-            mkdir -p "$CSProjDir"
-            CSProjPath="$CSProjDir/${PKG_NAME}.csproj"
+            # Create .csproj
+            CSProjPath="$ROOT/csharp/dfhack-csharp/${PKG_NAME}.csproj"
 
             {
               echo "<Project Sdk=\"Microsoft.NET.Sdk\">"
@@ -83,41 +81,66 @@ jobs:
               echo "</Project>"
             } > "$CSProjPath"
 
+            # Create .sln
             (
               set -x
-              cd "$TMPDIR"
-              dotnet build "dfhack-csharp/${PKG_NAME}.csproj" --configuration Release
-              dotnet pack  "dfhack-csharp/${PKG_NAME}.csproj" --configuration Release --no-build --output ./nuget
-            )
-
-            mv "$TMPDIR/nuget/"*.nupkg "$ROOT/csharp/dfhack-csharp/nuget/" 2>/dev/null || true
-
-            # Persist .csproj into $ROOT/csharp/dfhack-csharp/
-            mkdir -p "$ROOT/csharp/dfhack-csharp"
-            cp "$CSProjPath" "$ROOT/csharp/dfhack-csharp/${PKG_NAME}.csproj"
-
-            # Generate .sln at $ROOT/csharp/ referencing the .csproj
-            (
-              set -x
-              mkdir -p "$ROOT/csharp"
               cd "$ROOT/csharp"
               dotnet new sln -n "${PKG_NAME}" --force
               dotnet sln "${PKG_NAME}.sln" add "dfhack-csharp/${PKG_NAME}.csproj"
             )
 
-
-            rm -rf "$TMPDIR"
           done
 
-      - name: Commit generated files
+      #######################################################################
+      # 2. COMMIT PROJECT + SOLUTION FILES
+      #######################################################################
+      - name: Commit project + solution files
         run: |
           set -x
           git config user.name "github-actions"
           git config user.email "actions@github.com"
 
-          git add -f dfhack-v*/csharp/dfhack-csharp/nuget/
           git add -f dfhack-v*/csharp/dfhack-csharp/*.csproj
           git add -f dfhack-v*/csharp/*.sln
 
-          git commit -m "Generated .sln, .csproj and NuGet packages" || echo "No changes to commit"
+          git commit -m "Generated .csproj and .sln files" || echo "No changes to commit"
+          git push
+
+      #######################################################################
+      # 3. BUILD + PACK NUGET PACKAGES (AFTER PROJECTS ARE COMMITTED)
+      #######################################################################
+      - name: Build + pack NuGet packages
+        run: |
+          set -x
+
+          for ROOT in dfhack-v*; do
+            [[ -d "$ROOT" ]] || continue
+
+            echo "Packing $ROOT..."
+
+            PKG_NAME="${ROOT}"
+
+            mkdir -p "$ROOT/csharp/dfhack-csharp/nuget"
+
+            (
+              set -x
+              cd "$ROOT/csharp/dfhack-csharp"
+              dotnet build "${PKG_NAME}.csproj" --configuration Release
+              dotnet pack  "${PKG_NAME}.csproj" --configuration Release --no-build --output "./nuget"
+            )
+
+          done
+
+      #######################################################################
+      # 4. COMMIT NUGET PACKAGES
+      #######################################################################
+      - name: Commit NuGet packages
+        run: |
+          set -x
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+
+          git add -f dfhack-v*/csharp/dfhack-csharp/nuget/*.nupkg
+
+          git commit -m "Generated NuGet packages" || echo "No changes to commit"
           git push
