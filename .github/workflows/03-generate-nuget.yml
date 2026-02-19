@@ -93,10 +93,11 @@ jobs:
             # Move .nupkg into correct folder
             mv "$TMPDIR/nuget/"*.nupkg "$ROOT/csharp/dfhack-csharp/nuget/" 2>/dev/null || true
 
-            # Persist .csproj into dfhack-csharp/
+            # Persist .csproj into $ROOT/csharp/dfhack-csharp/
+            mkdir -p "$ROOT/csharp/dfhack-csharp"
             cp "$CSProjPath" "$ROOT/csharp/dfhack-csharp/${PKG_NAME}.csproj"
 
-            # Generate .sln in csharp/
+            # Generate .sln at $ROOT/csharp/ referencing the .csproj
             dotnet new sln -n "${PKG_NAME}" --output "$ROOT/csharp" --force
             dotnet sln "$ROOT/csharp/${PKG_NAME}.sln" add "$ROOT/csharp/dfhack-csharp/${PKG_NAME}.csproj"
 
