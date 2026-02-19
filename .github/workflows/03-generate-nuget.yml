@@ -82,12 +82,10 @@ jobs:
             } > "$CSProjPath"
 
             # Generate .sln at $ROOT/csharp/ referencing the .csproj
-            (
-              set -x
-              cd "$ROOT/csharp"
-              dotnet new sln -n "${PKG_NAME}" --force
-              dotnet sln "${PKG_NAME}.sln" add "dfhack-csharp/${PKG_NAME}.csproj"
-            )
+
+            cd "$ROOT/csharp"
+            dotnet new sln -n "${PKG_NAME}" --force
+            dotnet sln "${PKG_NAME}.sln" add "dfhack-csharp/${PKG_NAME}.csproj"
 
 
           done
