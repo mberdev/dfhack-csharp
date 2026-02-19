@@ -53,7 +53,7 @@ jobs:
               [[ "$RPCPROTO_PATH" == "$ROOT/rpcproto" ]] && continue
 
               PLUGIN=$(basename "$RPCPROTO_PATH")
-              GEN="$ROOT/csharp/$PLUGIN"
+              GEN="$ROOT/csharp/src/dfhack-csharp/$PLUGIN"
 
               # Check if csharp folder is missing or empty
               if [[ ! -d "$GEN" ]] || [[ -z "$(ls -A "$GEN" 2>/dev/null)" ]]; then
@@ -138,7 +138,7 @@ jobs:
             ROOT=$(dirname $(dirname "$RPCPROTO_PATH"))
 
             DFHACK_PATH="$ROOT/rpcproto/dfhack"
-            CSHARP_OUT="$ROOT/csharp/src/$PLUGIN"
+            CSHARP_OUT="$ROOT/csharp/src/dfhack-csharp/$PLUGIN"
 
             echo "Generating C# for:"
             echo "  Input proto folder:   $RPCPROTO_PATH"
