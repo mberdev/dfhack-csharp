@@ -98,8 +98,11 @@ jobs:
             cp "$CSProjPath" "$ROOT/csharp/dfhack-csharp/${PKG_NAME}.csproj"
 
             # Generate .sln at $ROOT/csharp/ referencing the .csproj
-            dotnet new sln -n "${PKG_NAME}" --output "$ROOT/csharp" --force
-            dotnet sln "$ROOT/csharp/${PKG_NAME}.sln" add "$ROOT/csharp/dfhack-csharp/${PKG_NAME}.csproj"
+            (
+              cd "$ROOT/csharp"
+              dotnet new sln -n "${PKG_NAME}" --force
+              dotnet sln "${PKG_NAME}.sln" add "dfhack-csharp/${PKG_NAME}.csproj"
+            )
 
             rm -rf "$TMPDIR"
           done
