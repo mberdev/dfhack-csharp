@@ -9,6 +9,7 @@
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <AssemblyName>dfhack-v0.40.24-r5</AssemblyName>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <Nullable>disable</Nullable>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Google.Protobuf" Version="3.25.3" />
@@ -16,6 +17,5 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="src/**/*.cs" />
-    <None Include="src/**/*.cs" Pack="true" PackagePath="src/" />
   </ItemGroup>
 </Project>
