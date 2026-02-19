@@ -34,11 +34,6 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
-      - name: Prepare nuget output folder
-        run: |
-          rm -rf nuget
-          mkdir -p nuget
-
       - name: Generate NuGet packages for each dfhack-v* folder
         run: |
           for ROOT in dfhack-v*; do
@@ -49,17 +44,19 @@ jobs:
             PKG_NAME="${ROOT}"
             VERSION="1.0.0"
 
-            mkdir -p "$ROOT/csharp/nuget"
+            # Correct nuget output folder
+            mkdir -p "$ROOT/csharp/dfhack-csharp/nuget"
 
             TMPDIR="tmp_nuget_${ROOT}"
             rm -rf "$TMPDIR"
             mkdir -p "$TMPDIR/src"
 
-            # Copy .cs source tree from csharp/src so structure inside TMPDIR/src matches
-            cp -r "$ROOT/csharp/src/." "$TMPDIR/src/"
+            # Copy generated C# files from the correct location
+            cp -r "$ROOT/csharp/dfhack-csharp/src/." "$TMPDIR/src/"
 
-            # .csproj lives inside src/dfhack-csharp/, same as in the persisted location
-            CSProjDir="$TMPDIR/src/dfhack-csharp"
+            # .csproj must live in TMPDIR/dfhack-csharp
+            CSProjDir="$TMPDIR/dfhack-csharp"
+            mkdir -p "$CSProjDir"
             CSProjPath="$CSProjDir/${PKG_NAME}.csproj"
 
             {
@@ -81,45 +78,39 @@ jobs:
               echo "    <PackageReference Include=\"Grpc.Core\" Version=\"2.46.6\" />"
               echo "  </ItemGroup>"
               echo "  <ItemGroup>"
-              echo "    <Compile Include=\"**/*.cs\" />"
+              echo "    <Compile Include=\"src/**/*.cs\" />"
               echo "  </ItemGroup>"
               echo "</Project>"
             } > "$CSProjPath"
 
-            # Build + pack from TMPDIR, output nupkg into TMPDIR/nuget/
+            # Build + pack
             (
               cd "$TMPDIR"
-              dotnet build "src/dfhack-csharp/${PKG_NAME}.csproj" --configuration Release
-              dotnet pack  "src/dfhack-csharp/${PKG_NAME}.csproj" --configuration Release --no-build --output ./nuget
+              dotnet build "dfhack-csharp/${PKG_NAME}.csproj" --configuration Release
+              dotnet pack  "dfhack-csharp/${PKG_NAME}.csproj" --configuration Release --no-build --output ./nuget
             )
 
-            # Move .nupkg into $ROOT/csharp/nuget/
-            find "$TMPDIR/nuget" -name "*.nupkg" -exec mv {} "$ROOT/csharp/nuget/" \;
+            # Move .nupkg into correct folder
+            mv "$TMPDIR/nuget/"*.nupkg "$ROOT/csharp/dfhack-csharp/nuget/" 2>/dev/null || true
 
-            # Persist .csproj into $ROOT/csharp/src/dfhack-csharp/
-            mkdir -p "$ROOT/csharp/src/dfhack-csharp"
-            cp "$CSProjPath" "$ROOT/csharp/src/dfhack-csharp/${PKG_NAME}.csproj"
+            # Persist .csproj into dfhack-csharp/
+            cp "$CSProjPath" "$ROOT/csharp/dfhack-csharp/${PKG_NAME}.csproj"
 
-            # Generate .sln at $ROOT/csharp/ referencing the .csproj
+            # Generate .sln in csharp/
             dotnet new sln -n "${PKG_NAME}" --output "$ROOT/csharp" --force
-            dotnet sln "$ROOT/csharp/${PKG_NAME}.sln" add "$ROOT/csharp/src/dfhack-csharp/${PKG_NAME}.csproj"
+            dotnet sln "$ROOT/csharp/${PKG_NAME}.sln" add "$ROOT/csharp/dfhack-csharp/${PKG_NAME}.csproj"
 
             rm -rf "$TMPDIR"
           done
-
 
       - name: Commit generated files
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
 
-          git add -f dfhack-v*/csharp/nuget/
-          git add -f dfhack-v*/csharp/src/dfhack-csharp/*.csproj
+          git add -f dfhack-v*/csharp/dfhack-csharp/nuget/
+          git add -f dfhack-v*/csharp/dfhack-csharp/*.csproj
           git add -f dfhack-v*/csharp/*.sln
 
           git commit -m "Generated .sln, .csproj and NuGet packages" || echo "No changes to commit"
           git push
-
-
-
-
