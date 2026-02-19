@@ -68,8 +68,8 @@ jobs:
 
           # Define the two mappings
           MAPPING=(
-            "dfhack/library/proto dfhack-$VERSION/dfhack"
-            "dfhack/plugins/remotefortressreader/proto dfhack-$VERSION/remotefortressreader"
+            "dfhack/library/proto dfhack-$VERSION/proto/dfhack"
+            "dfhack/plugins/remotefortressreader/proto dfhack-$VERSION/proto/remotefortressreader"
           )
 
           echo "See variable MAPPING in the workflow to add more source folders, or change their destination folders."
@@ -79,12 +79,12 @@ jobs:
             SOURCE_PROTO="$1"
             OUTBASE="$2"
 
-            echo "Copying proto files from $SOURCE_PROTO to $OUTBASE/proto"
+            echo "Copying proto files from $SOURCE_PROTO to $OUTBASE"
 
-            mkdir -p "$OUTBASE/proto"
-            rm -rf "$OUTBASE/proto" || true
-            mkdir -p "$OUTBASE/proto"
-            cp "$SOURCE_PROTO"/*.proto "$OUTBASE/proto"
+            mkdir -p "$OUTBASE"
+            rm -rf "$OUTBASE" || true
+            mkdir -p "$OUTBASE"
+            cp "$SOURCE_PROTO"/*.proto "$OUTBASE"
           done
 
       ###############################################################

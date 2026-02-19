@@ -58,12 +58,12 @@ jobs:
           for ROOT in dfhack-v*; do
             [[ -d "$ROOT" ]] || continue
 
-            # Find any "proto" folder at any depth
+            # Find all subdirs under the proto folder
             while read PROTO_PATH; do
               [[ -z "$PROTO_PATH" ]] && continue
 
-              OUTBASE=$(dirname "$PROTO_PATH")
-              RPCPROTO="$OUTBASE/rpcproto"
+              PLUGIN=$(basename "$PROTO_PATH")
+              RPCPROTO="$ROOT/rpcproto/$PLUGIN"
 
               # Check if rpcproto folder is missing or empty
               if [[ ! -d "$RPCPROTO" ]] || [[ -z "$(ls -A "$RPCPROTO" 2>/dev/null)" ]]; then
@@ -73,7 +73,7 @@ jobs:
                 echo "Skipping $PROTO_PATH (rpcproto exists and is not empty)"
               fi
 
-            done < <(find "$ROOT" -type d -name proto)
+            done < <(find "$ROOT/proto" -type d)
           done
 
           if [[ -z "$NEEDS_GEN" ]]; then
@@ -148,9 +148,9 @@ jobs:
             #################################################################
             # PROCESS FOLDER
             #################################################################
-            
-            OUTBASE=$(dirname "$PROTO_PATH")
-            RPCPROTO="$OUTBASE/rpcproto"
+
+            PLUGIN=$(basename "$PROTO_PATH")
+            RPCPROTO="$CURRENT_DFHACK_ROOT/rpcproto/$PLUGIN"
 
             echo "Generating rpcproto for:"
             echo "  Input proto folder: $PROTO_PATH"

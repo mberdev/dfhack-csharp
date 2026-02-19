@@ -47,22 +47,22 @@ jobs:
           for ROOT in dfhack-v*; do
             [[ -d "$ROOT" ]] || continue
 
-            # Find rpcproto folders anywhere inside this dfhack-v* folder
+            # Find all subdirs under the rpcproto folder
             while read RPCPROTO_PATH; do
               [[ -z "$RPCPROTO_PATH" ]] && continue
 
-              OUTBASE=$(dirname "$RPCPROTO_PATH")
-              GEN="$OUTBASE/Generated"
+              PLUGIN=$(basename "$RPCPROTO_PATH")
+              GEN="$ROOT/csharp/$PLUGIN"
 
-              # Check if Generated folder is missing or empty
+              # Check if csharp folder is missing or empty
               if [[ ! -d "$GEN" ]] || [[ -z "$(ls -A "$GEN" 2>/dev/null)" ]]; then
                 echo "Will generate C# for: $RPCPROTO_PATH"
                 NEEDS_GEN="$NEEDS_GEN $RPCPROTO_PATH"
               else
-                echo "Skipping $RPCPROTO_PATH (Generated exists and is not empty)"
+                echo "Skipping $RPCPROTO_PATH (csharp exists and is not empty)"
               fi
 
-            done < <(find "$ROOT" -type d -name rpcproto)
+            done < <(find "$ROOT/rpcproto" -type d)
           done
 
           if [[ -z "$NEEDS_GEN" ]]; then
@@ -133,23 +133,25 @@ jobs:
           for RPCPROTO_PATH in $(cat rpcproto_list.txt); do
             [[ "$RPCPROTO_PATH" == "none" ]] && continue
 
-            OUTBASE=$(dirname "$RPCPROTO_PATH")
+            PLUGIN=$(basename "$RPCPROTO_PATH")
+            ROOT=$(dirname $(dirname "$RPCPROTO_PATH"))
 
-            DFHACK_PATH="$RPCPROTO_PATH/../../dfhack/rpcproto"
+            DFHACK_PATH="$ROOT/rpcproto/dfhack"
+            CSHARP_OUT="$ROOT/csharp/$PLUGIN"
 
             echo "Generating C# for:"
             echo "  Input proto folder:   $RPCPROTO_PATH"
             echo "  DFHack proto folder:  $DFHACK_PATH"
-            echo "  Output base:          $OUTBASE/csharp"
+            echo "  Output folder:        $CSHARP_OUT"
 
-            rm -rf "$OUTBASE/csharp" || true
-            mkdir -p "$OUTBASE/csharp"
+            rm -rf "$CSHARP_OUT" || true
+            mkdir -p "$CSHARP_OUT"
 
             protoc \
               --proto_path="$RPCPROTO_PATH" \
               --proto_path="$DFHACK_PATH" \
-              --csharp_out="$OUTBASE/csharp" \
-              --grpc_out="$OUTBASE/csharp" \
+              --csharp_out="$CSHARP_OUT" \
+              --grpc_out="$CSHARP_OUT" \
               --plugin=protoc-gen-grpc=$(which grpc_csharp_plugin) \
               "$RPCPROTO_PATH"/*.proto
 
