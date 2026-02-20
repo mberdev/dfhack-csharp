@@ -85,7 +85,7 @@ jobs:
             # DEBUG BEFORE SLN CREATION
             ###################################################################
             echo "----- DEBUG: BEFORE SLN CREATION -----"
-            echo "Current directory:"
+            echo "PWD:"
             pwd || echo "pwd failed"
             echo ""
             echo "Folder structure under $ROOT:"
@@ -93,7 +93,7 @@ jobs:
             echo "--------------------------------------"
 
             ###################################################################
-            # CREATE SLN (classic .sln, not .slnx)
+            # CREATE SLN (classic .sln)
             ###################################################################
             mkdir -p "$ROOT/csharp"
             cd "$ROOT/csharp" || { echo "ERROR: cd failed"; exit 1; }
@@ -103,8 +103,8 @@ jobs:
             ls -R . || echo "ls failed"
             echo "------------------------------------------"
 
-            # Force classic .sln format
-            dotnet new sln -n "dfhack-csharp" --force --use-sln-file
+            # .NET 6 always generates classic .sln
+            dotnet new sln -n "dfhack-csharp" --force
 
             ###################################################################
             # DEBUG AFTER SLN CREATION
@@ -176,7 +176,5 @@ jobs:
           git config user.name "github-actions"
           git config user.email "actions@github.com"
 
-          git add -f dfhack-v*/csharp/dfhack-csharp/nuget/*.nupkg
+          git add -f dfhack-v*/csharp/dfhack
 
-          git commit -m "Generated NuGet packages" || echo "No changes to commit"
-          git push
