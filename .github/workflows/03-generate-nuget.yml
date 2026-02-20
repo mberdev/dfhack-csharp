@@ -31,10 +31,10 @@ jobs:
           git checkout main
           git pull origin main --rebase
 
-      - name: Install .NET SDK
+      - name: Install .NET SDK (Unity-compatible)
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "8.0.x"
+          dotnet-version: "6.0.x"
 
       #######################################################################
       # 1. GENERATE ALL .csproj AND .sln FILES FIRST (NO PACKING YET)
@@ -93,29 +93,24 @@ jobs:
             echo "--------------------------------------"
 
             ###################################################################
-            # CREATE SLN
+            # CREATE SLN (classic .sln, not .slnx)
             ###################################################################
             mkdir -p "$ROOT/csharp"
             cd "$ROOT/csharp" || { echo "ERROR: cd failed"; exit 1; }
 
             echo "----- DEBUG: INSIDE csharp BEFORE SLN -----"
-            echo "PWD:"
             pwd || echo "pwd failed"
-            echo ""
-            echo "Contents:"
             ls -R . || echo "ls failed"
             echo "------------------------------------------"
 
-            dotnet new sln -n "dfhack-csharp" --force
+            # Force classic .sln format
+            dotnet new sln -n "dfhack-csharp" --force --use-sln-file
 
             ###################################################################
             # DEBUG AFTER SLN CREATION
             ###################################################################
             echo "----- DEBUG: AFTER SLN CREATION -----"
-            echo "PWD:"
             pwd || echo "pwd failed"
-            echo ""
-            echo "Contents:"
             ls -R . || echo "ls failed"
             echo "--------------------------------------"
 
@@ -125,10 +120,7 @@ jobs:
             # DEBUG AFTER PROJECT ADD
             ###################################################################
             echo "----- DEBUG: AFTER PROJECT ADD -----"
-            echo "PWD:"
             pwd || echo "pwd failed"
-            echo ""
-            echo "Contents:"
             ls -R . || echo "ls failed"
             echo "-------------------------------------"
 
