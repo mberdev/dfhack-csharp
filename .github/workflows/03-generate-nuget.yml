@@ -98,16 +98,39 @@ jobs:
             mkdir -p "$ROOT/csharp"
             cd "$ROOT/csharp" || { echo "ERROR: cd failed"; exit 1; }
 
-            echo "----- DEBUG: INSIDE csharp/ -----"
+            echo "----- DEBUG: INSIDE csharp BEFORE SLN -----"
             echo "PWD:"
             pwd || echo "pwd failed"
             echo ""
             echo "Contents:"
             ls -R . || echo "ls failed"
-            echo "---------------------------------"
+            echo "------------------------------------------"
 
             dotnet new sln -n "dfhack-csharp" --force
+
+            ###################################################################
+            # DEBUG AFTER SLN CREATION
+            ###################################################################
+            echo "----- DEBUG: AFTER SLN CREATION -----"
+            echo "PWD:"
+            pwd || echo "pwd failed"
+            echo ""
+            echo "Contents:"
+            ls -R . || echo "ls failed"
+            echo "--------------------------------------"
+
             dotnet sln "dfhack-csharp.sln" add "dfhack-csharp/dfhack-csharp.csproj"
+
+            ###################################################################
+            # DEBUG AFTER PROJECT ADD
+            ###################################################################
+            echo "----- DEBUG: AFTER PROJECT ADD -----"
+            echo "PWD:"
+            pwd || echo "pwd failed"
+            echo ""
+            echo "Contents:"
+            ls -R . || echo "ls failed"
+            echo "-------------------------------------"
 
             cd - >/dev/null
           done
@@ -159,4 +182,9 @@ jobs:
           set -euo pipefail
           set -x
           git config user.name "github-actions"
-          git config
+          git config user.email "actions@github.com"
+
+          git add -f dfhack-v*/csharp/dfhack-csharp/nuget/*.nupkg
+
+          git commit -m "Generated NuGet packages" || echo "No changes to commit"
+          git push
