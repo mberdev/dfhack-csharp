@@ -55,7 +55,7 @@ jobs:
             mkdir -p "$ROOT/csharp/dfhack-csharp/src"
 
             # Create .csproj
-            CSProjPath="$ROOT/csharp/dfhack-csharp/${PKG_NAME}.csproj"
+            CSProjPath="$ROOT/csharp/dfhack-csharp/dfhack-csharp.csproj"
 
             {
               echo "<Project Sdk=\"Microsoft.NET.Sdk\">"
@@ -81,9 +81,34 @@ jobs:
               echo "</Project>"
             } > "$CSProjPath"
 
+            
             # Generate .sln at $ROOT/csharp/ referencing the .csproj
-            dotnet new sln -n "dfhack-csharp" --output "$ROOT/csharp" --force
-            dotnet sln "$ROOT/csharp/dfhack-csharp.sln" add "$ROOT/csharp/dfhack-csharp/${PKG_NAME}.csproj"
+            (
+              set -x
+
+              echo "----- DEBUG: BEFORE SLN CREATION -----"
+              echo "Current directory:"
+              pwd
+              echo ""
+              echo "Folder structure under $ROOT:"
+              find "$ROOT" -maxdepth 4 -type f -print | sed 's/^/  /'
+              echo "--------------------------------------"
+
+              mkdir -p "$ROOT/csharp"
+              cd "$ROOT/csharp"
+
+              echo "----- DEBUG: INSIDE csharp/ -----"
+              echo "Current directory:"
+              pwd
+              echo ""
+              echo "Contents:"
+              ls -R .
+              echo "---------------------------------"
+
+              dotnet new sln -n "dfhack-csharp" --force
+              dotnet sln "dfhack-csharp.sln" add "dfhack-csharp/dfhack-csharp.csproj"
+            )
+
 
           done
 
