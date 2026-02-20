@@ -31,10 +31,10 @@ jobs:
           git checkout main
           git pull origin main --rebase
 
-      - name: Install .NET SDK (Unity-compatible)
+      - name: Install latest .NET SDK
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "6.0.x"
+          dotnet-version: "8.0.x"
 
       #######################################################################
       # 1. GENERATE ALL .csproj AND .sln FILES FIRST (NO PACKING YET)
@@ -93,7 +93,7 @@ jobs:
             echo "--------------------------------------"
 
             ###################################################################
-            # CREATE SLN (classic .sln)
+            # CREATE SLN (force classic .sln even on .NET 8+)
             ###################################################################
             mkdir -p "$ROOT/csharp"
             cd "$ROOT/csharp" || { echo "ERROR: cd failed"; exit 1; }
@@ -103,8 +103,8 @@ jobs:
             ls -R . || echo "ls failed"
             echo "------------------------------------------"
 
-            # .NET 6 always generates classic .sln
-            dotnet new sln -n "dfhack-csharp" --force
+            # Force .sln instead of .slnx
+            dotnet new sln --sln -n "dfhack-csharp" --force
 
             ###################################################################
             # DEBUG AFTER SLN CREATION
@@ -176,5 +176,7 @@ jobs:
           git config user.name "github-actions"
           git config user.email "actions@github.com"
 
-          git add -f dfhack-v*/csharp/dfhack
+          git add -f dfhack-v*/csharp/dfhack-csharp/nuget/*.nupkg
 
+          git commit -m "Generated NuGet packages" || echo "No changes to commit"
+          git push
