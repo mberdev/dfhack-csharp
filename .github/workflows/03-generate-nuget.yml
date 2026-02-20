@@ -25,6 +25,7 @@ jobs:
 
       - name: Ensure branch is up to date
         run: |
+          set -euo pipefail
           set -x
           git fetch origin main
           git checkout main
@@ -40,6 +41,7 @@ jobs:
       #######################################################################
       - name: Generate project + solution files
         run: |
+          set -euo pipefail
           set -x
 
           for ROOT in dfhack-v*; do
@@ -50,8 +52,6 @@ jobs:
             VERSION="1.0.0"
 
             # Ensure folder structure exists
-            mkdir -p "$ROOT/csharp"
-            mkdir -p "$ROOT/csharp/dfhack-csharp"
             mkdir -p "$ROOT/csharp/dfhack-csharp/src"
 
             # Create .csproj
@@ -81,35 +81,35 @@ jobs:
               echo "</Project>"
             } > "$CSProjPath"
 
-            
-            # Generate .sln at $ROOT/csharp/ referencing the .csproj
-            (
-              set -x
+            ###################################################################
+            # DEBUG BEFORE SLN CREATION
+            ###################################################################
+            echo "----- DEBUG: BEFORE SLN CREATION -----"
+            echo "Current directory:"
+            pwd || echo "pwd failed"
+            echo ""
+            echo "Folder structure under $ROOT:"
+            find "$ROOT" -maxdepth 4 -print | sed 's/^/  /'
+            echo "--------------------------------------"
 
-              echo "----- DEBUG: BEFORE SLN CREATION -----"
-              echo "Current directory:"
-              pwd
-              echo ""
-              echo "Folder structure under $ROOT:"
-              find "$ROOT" -maxdepth 4 -type f -print | sed 's/^/  /'
-              echo "--------------------------------------"
+            ###################################################################
+            # CREATE SLN
+            ###################################################################
+            mkdir -p "$ROOT/csharp"
+            cd "$ROOT/csharp" || { echo "ERROR: cd failed"; exit 1; }
 
-              mkdir -p "$ROOT/csharp"
-              cd "$ROOT/csharp"
+            echo "----- DEBUG: INSIDE csharp/ -----"
+            echo "PWD:"
+            pwd || echo "pwd failed"
+            echo ""
+            echo "Contents:"
+            ls -R . || echo "ls failed"
+            echo "---------------------------------"
 
-              echo "----- DEBUG: INSIDE csharp/ -----"
-              echo "Current directory:"
-              pwd
-              echo ""
-              echo "Contents:"
-              ls -R .
-              echo "---------------------------------"
+            dotnet new sln -n "dfhack-csharp" --force
+            dotnet sln "dfhack-csharp.sln" add "dfhack-csharp/dfhack-csharp.csproj"
 
-              dotnet new sln -n "dfhack-csharp" --force
-              dotnet sln "dfhack-csharp.sln" add "dfhack-csharp/dfhack-csharp.csproj"
-            )
-
-
+            cd - >/dev/null
           done
 
       #######################################################################
@@ -117,6 +117,7 @@ jobs:
       #######################################################################
       - name: Commit project + solution files
         run: |
+          set -euo pipefail
           set -x
           git config user.name "github-actions"
           git config user.email "actions@github.com"
@@ -128,10 +129,11 @@ jobs:
           git push
 
       #######################################################################
-      # 3. BUILD + PACK NUGET PACKAGES (AFTER PROJECTS ARE COMMITTED)
+      # 3. BUILD + PACK NUGET PACKAGES
       #######################################################################
       - name: Build + pack NuGet packages
         run: |
+          set -euo pipefail
           set -x
 
           for ROOT in dfhack-v*; do
@@ -139,17 +141,14 @@ jobs:
 
             echo "Packing $ROOT..."
 
-            PKG_NAME="${ROOT}"
-
             mkdir -p "$ROOT/csharp/dfhack-csharp/nuget"
 
-            (
-              set -x
-              cd "$ROOT/csharp/dfhack-csharp"
-              dotnet build "${PKG_NAME}.csproj" --configuration Release
-              dotnet pack  "${PKG_NAME}.csproj" --configuration Release --no-build --output "./nuget"
-            )
+            cd "$ROOT/csharp/dfhack-csharp" || { echo "cd failed"; exit 1; }
 
+            dotnet build "dfhack-csharp.csproj" --configuration Release
+            dotnet pack  "dfhack-csharp.csproj" --configuration Release --no-build --output "./nuget"
+
+            cd - >/dev/null
           done
 
       #######################################################################
@@ -157,11 +156,7 @@ jobs:
       #######################################################################
       - name: Commit NuGet packages
         run: |
+          set -euo pipefail
           set -x
           git config user.name "github-actions"
-          git config user.email "actions@github.com"
-
-          git add -f dfhack-v*/csharp/dfhack-csharp/nuget/*.nupkg
-
-          git commit -m "Generated NuGet packages" || echo "No changes to commit"
-          git push
+          git config
