@@ -37,7 +37,7 @@ jobs:
           dotnet-version: "8.0.x"
 
       #######################################################################
-      # 1. GENERATE ALL .csproj AND .sln FILES FIRST (NO PACKING YET)
+      # 1. GENERATE ALL .csproj AND .slnx FILES FIRST
       #######################################################################
       - name: Generate project + solution files
         run: |
@@ -85,43 +85,43 @@ jobs:
             # DEBUG BEFORE SLN CREATION
             ###################################################################
             echo "----- DEBUG: BEFORE SLN CREATION -----"
-            echo "PWD:"
-            pwd || echo "pwd failed"
-            echo ""
-            echo "Folder structure under $ROOT:"
+            pwd
             find "$ROOT" -maxdepth 4 -print | sed 's/^/  /'
             echo "--------------------------------------"
 
             ###################################################################
-            # CREATE SLN (force classic .sln even on .NET 8+)
+            # CREATE SOLUTION (will be .slnx on .NET 8+)
             ###################################################################
             mkdir -p "$ROOT/csharp"
-            cd "$ROOT/csharp" || { echo "ERROR: cd failed"; exit 1; }
+            cd "$ROOT/csharp"
 
             echo "----- DEBUG: INSIDE csharp BEFORE SLN -----"
-            pwd || echo "pwd failed"
-            ls -R . || echo "ls failed"
+            pwd
+            ls -R .
             echo "------------------------------------------"
 
-            # Force .sln instead of .slnx
-            dotnet new sln --sln -n "dfhack-csharp" --force
+            dotnet new sln -n "dfhack-csharp" --force
+
+            ###################################################################
+            # DETECT SOLUTION FILE (.sln or .slnx)
+            ###################################################################
+            SOLUTION_FILE=$(ls dfhack-csharp.sln* | head -n 1)
+
+            echo "Detected solution file: $SOLUTION_FILE"
 
             ###################################################################
             # DEBUG AFTER SLN CREATION
             ###################################################################
             echo "----- DEBUG: AFTER SLN CREATION -----"
-            pwd || echo "pwd failed"
-            ls -R . || echo "ls failed"
+            pwd
+            ls -R .
             echo "--------------------------------------"
 
-            dotnet sln "dfhack-csharp.sln" add "dfhack-csharp/dfhack-csharp.csproj"
+            dotnet sln "$SOLUTION_FILE" add "dfhack-csharp/dfhack-csharp.csproj"
 
-            ###################################################################
-            # DEBUG AFTER PROJECT ADD
-            ###################################################################
             echo "----- DEBUG: AFTER PROJECT ADD -----"
-            pwd || echo "pwd failed"
-            ls -R . || echo "ls failed"
+            pwd
+            ls -R .
             echo "-------------------------------------"
 
             cd - >/dev/null
@@ -138,9 +138,8 @@ jobs:
           git config user.email "actions@github.com"
 
           git add -f dfhack-v*/csharp/dfhack-csharp/*.csproj
-          git add -f dfhack-v*/csharp/*.sln
-
-          git commit -m "Generated .csproj and .sln files" || echo "No changes to commit"
+          git add -f dfhack-v*/csharp/*.sln*
+          git commit -m "Generated .csproj and solution files" || echo "No changes to commit"
           git push
 
       #######################################################################
@@ -154,11 +153,8 @@ jobs:
           for ROOT in dfhack-v*; do
             [[ -d "$ROOT" ]] || continue
 
-            echo "Packing $ROOT..."
-
             mkdir -p "$ROOT/csharp/dfhack-csharp/nuget"
-
-            cd "$ROOT/csharp/dfhack-csharp" || { echo "cd failed"; exit 1; }
+            cd "$ROOT/csharp/dfhack-csharp"
 
             dotnet build "dfhack-csharp.csproj" --configuration Release
             dotnet pack  "dfhack-csharp.csproj" --configuration Release --no-build --output "./nuget"
@@ -177,6 +173,5 @@ jobs:
           git config user.email "actions@github.com"
 
           git add -f dfhack-v*/csharp/dfhack-csharp/nuget/*.nupkg
-
           git commit -m "Generated NuGet packages" || echo "No changes to commit"
           git push
