@@ -83,9 +83,8 @@ jobs:
 
             # Generate .sln at $ROOT/csharp/ referencing the .csproj
 
-            CSHARP_ABS="$(realpath "$ROOT/csharp")"
-            dotnet new sln -n "${PKG_NAME}" --output "$CSHARP_ABS" --force
-            dotnet sln "$CSHARP_ABS/${PKG_NAME}.sln" add "$CSHARP_ABS/dfhack-csharp/${PKG_NAME}.csproj"
+            dotnet new sln -n "dfhack-csharp" --output "$CSHARP_ABS" --force
+            dotnet sln "$CSHARP_ABS/dfhack-csharp.sln" add "$CSHARP_ABS/dfhack-csharp/${PKG_NAME}.csproj"
 
 
           done
