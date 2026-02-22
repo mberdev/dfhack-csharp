@@ -45,25 +45,12 @@ jobs:
             echo "Processing $ROOT..."
 
             CSHARP_DIR="$ROOT/csharp"
-            EXAMPLE_DIR="$CSHARP_DIR/example"
+            EXAMPLE_DIR="$CSHARP_DIR/HandshakeExample"
 
             mkdir -p "$EXAMPLE_DIR"
 
             ###################################################################
-            # NuGet.config — points to the local nuget folder so the example
-            # project can restore the dfhack-csharp package without a feed
-            ###################################################################
-            {
-              echo "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
-              echo "<configuration>"
-              echo "  <packageSources>"
-              echo "    <add key=\"dfhack-local\" value=\"dfhack-csharp/nuget\" />"
-              echo "  </packageSources>"
-              echo "</configuration>"
-            } > "$CSHARP_DIR/NuGet.config"
-
-            ###################################################################
-            # example.csproj
+            # HandshakeExample.csproj — no external packages needed, only System.*
             ###################################################################
             {
               echo "<Project Sdk=\"Microsoft.NET.Sdk\">"
@@ -72,49 +59,105 @@ jobs:
               echo "    <TargetFramework>net8.0</TargetFramework>"
               echo "    <Nullable>disable</Nullable>"
               echo "  </PropertyGroup>"
-              echo "  <ItemGroup>"
-              echo "    <PackageReference Include=\"dfhack-csharp\" Version=\"1.0.0\" />"
-              echo "  </ItemGroup>"
               echo "</Project>"
-            } > "$EXAMPLE_DIR/example.csproj"
+            } > "$EXAMPLE_DIR/HandshakeExample.csproj"
 
             ###################################################################
             # Program.cs
             ###################################################################
             {
-              echo "using Grpc.Core;"
-              echo "using Dfproto;"
               echo "using System;"
+              echo "using System.Collections.Generic;"
+              echo "using System.Net.Sockets;"
+              echo "using System.Text;"
+              echo ""
+              echo "string DFHackHandshakeRequest = \"DFHack?\\n\";"
+              echo "string DFHackHandshakeReply = \"DFHack!\\n\";"
               echo ""
               echo ""
+              echo "//var host = \"localhost\";"
+              echo "var host = \"127.0.0.1\";"
+              echo "//var host = \"::1\";"
+              echo ""
+              echo "int port = 5000;"
+              echo ""
+              echo "Console.WriteLine(\$\"Connecting socket to host '{host}' on port {port}...\");"
+              echo ""
+              echo "var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);"
               echo "try"
               echo "{"
-              echo "    var channel = new Channel(\"localhost\", 5000, ChannelCredentials.Insecure);"
-              echo "    var client = new BasicApiRpcService.BasicApiRpcServiceClient(channel);"
-              echo ""
-              echo "    var version = client.GetVersion(new EmptyMessage());"
-              echo "    Console.WriteLine(\"Succesffully called method 'GetVersion' of DFHack.\");"
-              echo "    Console.WriteLine(\"DFHack version: \" + version.Value);"
-              echo ""
-              echo "    await channel.ShutdownAsync();"
+              echo "    socket.Connect(host, 5000);"
+              echo "} catch (SocketException){"
+              echo "    Console.WriteLine(\"Could not connect socket)\");"
+              echo "    return;"
               echo "}"
-              echo "catch (Grpc.Core.RpcException ex)"
+              echo ""
+              echo "Console.WriteLine(\"Connection successful.\");"
+              echo ""
+              echo "var headerList = new List<byte>();"
+              echo "headerList.AddRange(Encoding.ASCII.GetBytes(DFHackHandshakeRequest)); // See DFHack's handshake documentation"
+              echo "headerList.AddRange(BitConverter.GetBytes(1)); // 1 -> [1, 0, 0, 0]. Supposed to be DFHack's protocol version, on 4 bytes. See DFHack's handshake documentation"
+              echo "byte[] header = headerList.ToArray();"
+              echo ""
+              echo "Console.WriteLine(\"Sending DFHack header and version...\");"
+              echo ""
+              echo "if (socket.Send(header) != header.Length)"
               echo "{"
-              echo "    Console.WriteLine(\"Failed to call DFHack.\");"
-              echo "    Console.WriteLine(\"Make sure that Dwarf Fortress is currently running and that the version of DFHack that matches this library is installed on DF and is enabled.\");"
-              echo "    Console.WriteLine(\"\");"
-              echo "    Console.WriteLine(\"Details:\");"
-              echo "    Console.WriteLine(ex.Status.Detail);"
+              echo "    Console.WriteLine(\"Could not send handshake header.\\n\");"
+              echo "    return;"
               echo "}"
+              echo ""
+              echo "Console.WriteLine(\"Sent successfully.\");"
+              echo "Console.WriteLine(\"Receiving DFHack's response and protocol version...\");"
+              echo ""
+              echo "// Read the hanshake reply magic word"
+              echo "byte[] replyBuffer = new byte[DFHackHandshakeReply.Length];"
+              echo "int received = 0;"
+              echo "while (received < replyBuffer.Length)"
+              echo "{"
+              echo "    int cnt = socket.Receive(replyBuffer, received, replyBuffer.Length - received, SocketFlags.None);"
+              echo "    if (cnt <= 0) break;"
+              echo "    received += cnt;"
+              echo "}"
+              echo ""
+              echo "if (Encoding.ASCII.GetString(replyBuffer) != DFHackHandshakeReply)"
+              echo "{"
+              echo "    Console.WriteLine(\"Handshake reply mismatch. Expected: \" + DFHackHandshakeReply.Replace(\"\\n\", \"\\\\n\") + \", got: \" + Encoding.ASCII.GetString(replyBuffer).Replace(\"\\n\", \"\\\\n\"));"
+              echo "    return;"
+              echo "}"
+              echo ""
+              echo ""
+              echo "// Read 4 more bytes. Assembled together (as an int32) they're supposed to be DFHack's protocol version. See documentation"
+              echo "byte[] versionBuf = new byte[4];"
+              echo "int versionReceived = 0;"
+              echo "while (versionReceived < versionBuf.Length)"
+              echo "{"
+              echo "    int cnt = socket.Receive(versionBuf, versionReceived, versionBuf.Length - versionReceived, SocketFlags.None);"
+              echo "    if (cnt <= 0) return;"
+              echo "    versionReceived += cnt;"
+              echo "}"
+              echo ""
+              echo "if (versionBuf[0] != 1 || versionBuf[1] != 0 || versionBuf[2] != 0 || versionBuf[3] != 0) // Version [1,0,0,0] (i.e., version 1)"
+              echo "{"
+              echo "    Console.WriteLine(\$\"Unexpected protocol version: [{versionBuf[0]}, {versionBuf[1]}, {versionBuf[2]}, {versionBuf[3]}]\");"
+              echo "    return;"
+              echo "}"
+              echo ""
+              echo "Console.WriteLine(\"DFHack replied what we expected.\");"
+              echo ""
+              echo ""
+              echo "Console.WriteLine(\"\\nThis example program successfuly connected to DFHack and it responded!\");"
+              echo ""
+              echo ""
+              echo "socket.Close();"
             } > "$EXAMPLE_DIR/Program.cs"
 
             ###################################################################
-            # Add example project to the existing solution, then reorder
-            # so it appears first (startup project)
+            # Add HandshakeExample project to the existing solution
             ###################################################################
             SOLUTION_FILE=$(ls "$CSHARP_DIR"/dfhack-csharp.sln* | head -n 1)
-            echo "Adding example to solution: $SOLUTION_FILE"
-            dotnet sln "$SOLUTION_FILE" add "$EXAMPLE_DIR/example.csproj"
+            echo "Adding HandshakeExample to solution: $SOLUTION_FILE"
+            dotnet sln "$SOLUTION_FILE" add "$EXAMPLE_DIR/HandshakeExample.csproj"
 
 
           done
@@ -126,9 +169,8 @@ jobs:
           git config user.name "github-actions"
           git config user.email "actions@github.com"
 
-          git add dfhack-v*/csharp/example/
-          git add dfhack-v*/csharp/NuGet.config
+          git add dfhack-v*/csharp/HandshakeExample/
           git add -f dfhack-v*/csharp/*.sln*
 
-          git commit -m "Generated example console app" || echo "No changes to commit"
+          git commit -m "Generated HandshakeExample console app" || echo "No changes to commit"
           git push
