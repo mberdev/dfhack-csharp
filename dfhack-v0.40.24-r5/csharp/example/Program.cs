@@ -1,5 +1,6 @@
 using Grpc.Core;
 using Dfproto;
+using System;
 
 var channel = new Channel("localhost", 5000, ChannelCredentials.Insecure);
 var client = new BasicApiRpcService.BasicApiRpcServiceClient(channel);
