@@ -52,7 +52,15 @@ jobs:
           TAGS=$(git ls-remote --tags https://github.com/DFHack/dfhack.git | \
             awk -F'/' '{print $3}' | sed 's/\^{}//' )
 
-          LATEST=$(echo "$TAGS" | sort -V | tail -n 1)
+          # Keep only tags that start with a digit (excludes v50.xxx style tags)
+          # Sort numerically per component: treat -rN as a fourth dot-separated component
+          LATEST=$(echo "$TAGS" | grep -E '^[0-9]' | \
+            awk '{
+              v = $0
+              gsub(/-r/, ".", v)
+              n = split(v, a, /\./)
+              printf "%05d%05d%05d%05d %s\n", a[1]+0, a[2]+0, a[3]+0, a[4]+0, $0
+            }' | sort | tail -n 1 | awk '{print $NF}')
 
           echo "version=$LATEST" >> $GITHUB_OUTPUT
           echo "Detected DFHack version: $LATEST"
