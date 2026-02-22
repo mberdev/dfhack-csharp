@@ -53,46 +53,46 @@ jobs:
             # NuGet.config — points to the local nuget folder so the example
             # project can restore the dfhack-csharp package without a feed
             ###################################################################
-            cat > "$CSHARP_DIR/NuGet.config" << 'EOF'
-<?xml version="1.0" encoding="utf-8"?>
-<configuration>
-  <packageSources>
-    <add key="dfhack-local" value="dfhack-csharp/nuget" />
-  </packageSources>
-</configuration>
-EOF
+            {
+              echo "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+              echo "<configuration>"
+              echo "  <packageSources>"
+              echo "    <add key=\"dfhack-local\" value=\"dfhack-csharp/nuget\" />"
+              echo "  </packageSources>"
+              echo "</configuration>"
+            } > "$CSHARP_DIR/NuGet.config"
 
             ###################################################################
             # example.csproj
             ###################################################################
-            cat > "$EXAMPLE_DIR/example.csproj" << 'EOF'
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
-    <Nullable>disable</Nullable>
-  </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="dfhack-csharp" Version="1.0.0" />
-  </ItemGroup>
-</Project>
-EOF
+            {
+              echo "<Project Sdk=\"Microsoft.NET.Sdk\">"
+              echo "  <PropertyGroup>"
+              echo "    <OutputType>Exe</OutputType>"
+              echo "    <TargetFramework>net8.0</TargetFramework>"
+              echo "    <Nullable>disable</Nullable>"
+              echo "  </PropertyGroup>"
+              echo "  <ItemGroup>"
+              echo "    <PackageReference Include=\"dfhack-csharp\" Version=\"1.0.0\" />"
+              echo "  </ItemGroup>"
+              echo "</Project>"
+            } > "$EXAMPLE_DIR/example.csproj"
 
             ###################################################################
             # Program.cs
             ###################################################################
-            cat > "$EXAMPLE_DIR/Program.cs" << 'EOF'
-using Grpc.Core;
-using Dfproto;
-
-var channel = new Channel("localhost", 5000, ChannelCredentials.Insecure);
-var client = new BasicApiRpcService.BasicApiRpcServiceClient(channel);
-
-var version = client.GetVersion(new EmptyMessage());
-Console.WriteLine("DFHack version: " + version.Value);
-
-await channel.ShutdownAsync();
-EOF
+            {
+              echo "using Grpc.Core;"
+              echo "using Dfproto;"
+              echo ""
+              echo "var channel = new Channel(\"localhost\", 5000, ChannelCredentials.Insecure);"
+              echo "var client = new BasicApiRpcService.BasicApiRpcServiceClient(channel);"
+              echo ""
+              echo "var version = client.GetVersion(new EmptyMessage());"
+              echo "Console.WriteLine(\"DFHack version: \" + version.Value);"
+              echo ""
+              echo "await channel.ShutdownAsync();"
+            } > "$EXAMPLE_DIR/Program.cs"
 
             ###################################################################
             # Add example project to the existing solution
