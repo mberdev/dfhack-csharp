@@ -82,6 +82,7 @@ jobs:
             # Program.cs
             ###################################################################
             {
+              echo "using System;"
               echo "using Grpc.Core;"
               echo "using Dfproto;"
               echo ""
