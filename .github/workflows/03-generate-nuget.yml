@@ -157,6 +157,10 @@ jobs:
             dotnet build "dfhack-csharp.csproj" --configuration Release
             dotnet pack  "dfhack-csharp.csproj" --configuration Release --no-build --output "./nuget"
 
+            echo "----- DEBUG: nupkg files after dotnet pack -----"
+            find . -name "*.nupkg" -print
+            echo "------------------------------------------------"
+
             cd - >/dev/null
           done
 
