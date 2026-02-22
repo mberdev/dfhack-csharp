@@ -116,15 +116,6 @@ jobs:
             echo "Adding example to solution: $SOLUTION_FILE"
             dotnet sln "$SOLUTION_FILE" add "$EXAMPLE_DIR/example.csproj"
 
-            # Reorder: extract both Project lines and write example first
-            EXAMPLE_LINE=$(grep 'example.csproj' "$SOLUTION_FILE")
-            LIB_LINE=$(grep 'dfhack-csharp.csproj' "$SOLUTION_FILE")
-            {
-              echo "<Solution>"
-              echo "$EXAMPLE_LINE"
-              echo "$LIB_LINE"
-              echo "</Solution>"
-            } > "$SOLUTION_FILE"
 
           done
 
