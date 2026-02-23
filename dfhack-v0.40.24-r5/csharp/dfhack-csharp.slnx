@@ -1,4 +1,3 @@
 <Solution>
   <Project Path="dfhack-csharp/dfhack-csharp.csproj" />
-  <Project Path="HandshakeExample/HandshakeExample.csproj" />
 </Solution>
