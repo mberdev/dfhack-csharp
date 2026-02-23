@@ -94,7 +94,7 @@ jobs:
               echo "Console.WriteLine(\$\"Connecting to DFHack at '{host}:{port}' via gRPC...\");"
               echo ""
               echo "var channel = new Channel(host, port, ChannelCredentials.Insecure);"
-              echo "var client = new HandshakeRpcServiceClient(channel);"
+              echo "var client = new HandshakeRpcService.HandshakeRpcServiceClient(channel);"
               echo ""
               echo "var request = new HandshakeRequest"
               echo "{"
