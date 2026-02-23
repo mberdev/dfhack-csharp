@@ -1,4 +1,4 @@
-name: 04 (TRIGGERED) Generate Example Project
+name: 04 (TRIGGERED) Generate Socket Example Project
 
 on:
   workflow_run:
