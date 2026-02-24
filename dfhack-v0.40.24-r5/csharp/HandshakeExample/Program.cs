@@ -19,8 +19,8 @@ var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolT
 try
 {
     socket.Connect(host, 5000);
-} catch (SocketException){
-    Console.WriteLine("Could not connect socket)");
+} catch (SocketException) {
+    Console.WriteLine("Could not connect socket. DFHack is not listening?");
     return;
 }
 
