@@ -35,7 +35,7 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
-      - name: Generate gRPC example project
+      - name: Copy GrpcHandshakeExample template and add to solution
         run: |
           set -euo pipefail
           set -x
@@ -45,109 +45,16 @@ jobs:
             echo "Processing $ROOT..."
 
             CSHARP_DIR="$ROOT/csharp"
-            EXAMPLE_DIR="$CSHARP_DIR/GrpcHandshakeExample"
+            DEST="$CSHARP_DIR/GrpcHandshakeExample"
 
-            mkdir -p "$EXAMPLE_DIR"
+            cp -r templates/GrpcHandshakeExample "$DEST"
 
-            ###################################################################
-            # NuGet.config — points to the local dfhack-csharp nuget folder
-            ###################################################################
-            {
-              echo "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
-              echo "<configuration>"
-              echo "  <packageSources>"
-              echo "    <add key=\"local-dfhack\" value=\"../dfhack-csharp/nuget\" />"
-              echo "  </packageSources>"
-              echo "</configuration>"
-            } > "$EXAMPLE_DIR/NuGet.config"
-
-            ###################################################################
-            # GrpcHandshakeExample.csproj
-            ###################################################################
-            {
-              echo "<Project Sdk=\"Microsoft.NET.Sdk\">"
-              echo "  <PropertyGroup>"
-              echo "    <OutputType>Exe</OutputType>"
-              echo "    <TargetFramework>net8.0</TargetFramework>"
-              echo "    <Nullable>disable</Nullable>"
-              echo "  </PropertyGroup>"
-              echo "  <ItemGroup>"
-              echo "    <PackageReference Include=\"dfhack-csharp\" Version=\"*\" />"
-              echo "  </ItemGroup>"
-              echo "</Project>"
-            } > "$EXAMPLE_DIR/GrpcHandshakeExample.csproj"
-
-            ###################################################################
-            # Program.cs
-            ###################################################################
-            {
-              echo "using System;"
-              echo "using Grpc.Core;"
-              echo "using Dfproto;"
-              echo ""
-              echo "//var host = \"localhost\";"
-              echo "var host = \"127.0.0.1\";"
-              echo "//var host = \"::1\";"
-              echo ""
-              echo "int port = 5000;"
-              echo ""
-              echo "Console.WriteLine(\$\"Connecting to DFHack at '{host}:{port}' via gRPC...\");"
-              echo ""
-              echo "var channel = new Channel(host, port, ChannelCredentials.Insecure);"
-              echo "var client = new HandshakeRpcService.HandshakeRpcServiceClient(channel);"
-              echo ""
-              echo "var request = new HandshakeRequest"
-              echo "{"
-              echo "    RequestMagic = \"DFHack?\\n\","
-              echo "    ProtocolVersion = 1"
-              echo "};"
-              echo ""
-              echo "Console.WriteLine(\"Sending handshake request...\");"
-              echo ""
-              echo "HandshakeReply reply;"
-              echo "try"
-              echo "{"
-              echo "    reply = client.Handshake(request);"
-              echo "} catch (RpcException e)"
-              echo "{"
-              echo "    Console.WriteLine(\"gRPC call failed: \" + e.Message);"
-              echo "    return;"
-              echo "}"
-              echo ""
-              echo "Console.WriteLine(\"Received reply:\");"
-              echo "Console.WriteLine(\"  ResponseMagic: \" + reply.ResponseMagic.Replace(\"\\n\", \"\\\\n\"));"
-              echo "Console.WriteLine(\"  ProtocolVersion: \" + reply.ProtocolVersion);"
-              echo ""
-              echo "if (reply.ResponseMagic != \"DFHack!\\n\")"
-              echo "{"
-              echo "    Console.WriteLine(\"Unexpected response magic: \" + reply.ResponseMagic.Replace(\"\\n\", \"\\\\n\"));"
-              echo "    return;"
-              echo "}"
-              echo ""
-              echo "if (reply.ProtocolVersion != 1)"
-              echo "{"
-              echo "    Console.WriteLine(\$\"Unexpected protocol version: {reply.ProtocolVersion}\");"
-              echo "    return;"
-              echo "}"
-              echo ""
-              echo "Console.WriteLine(\"DFHack replied what we expected.\");"
-              echo ""
-              echo "Console.WriteLine(\"\\nThis example program successfully connected to DFHack via gRPC and it responded!\");"
-              echo ""
-              echo "channel.ShutdownAsync().Wait();"
-            } > "$EXAMPLE_DIR/Program.cs"
-
-            ###################################################################
-            # Add GrpcHandshakeExample project to the existing solution
-            ###################################################################
             SOLUTION_FILE=$(ls "$CSHARP_DIR"/dfhack-csharp.sln* | head -n 1)
             echo "Adding GrpcHandshakeExample to solution: $SOLUTION_FILE"
-            dotnet sln "$SOLUTION_FILE" add "$EXAMPLE_DIR/GrpcHandshakeExample.csproj"
-
-
+            dotnet sln "$SOLUTION_FILE" add "$DEST/GrpcHandshakeExample.csproj"
           done
 
-      - name: Commit gRPC example project
+      - name: Commit GrpcHandshakeExample
         run: |
           set -euo pipefail
           set -x
