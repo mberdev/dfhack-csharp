@@ -29,7 +29,6 @@ jobs:
 
       - name: Ensure branch is up to date
         run: |
-          echo "DEBUG: step started"
           git fetch origin main
           git checkout main
           git pull origin main --rebase
@@ -55,8 +54,10 @@ jobs:
         id: folders
         run: |
           set -euo pipefail
-          set -x
+          # set -x
           NEEDS_GEN=""
+
+          echo "DEBUG: step started"
 
           for ROOT in dfhack-v*; do
             [[ -d "$ROOT" ]] || continue
