@@ -52,37 +52,42 @@ jobs:
       - name: Find proto folders needing rpcproto generation
         id: folders
         run: |
+          set -euo pipefail
+          set -x
           NEEDS_GEN=""
 
-          # Loop through all dfhack-v* folders
           for ROOT in dfhack-v*; do
             [[ -d "$ROOT" ]] || continue
+            echo "Checking $ROOT..."
 
-            # Find all subdirs under the proto folder
-            while read PROTO_PATH; do
-              [[ -z "$PROTO_PATH" ]] && continue
-              [[ "$PROTO_PATH" == "$ROOT/proto" ]] && continue
+            if [[ ! -d "$ROOT/proto" ]]; then
+              echo "No proto/ directory found under $ROOT — skipping"
+              continue
+            fi
 
-              PLUGIN=$(basename "$PROTO_PATH")
+            # -mindepth 1 -maxdepth 1 gives only direct subdirectories of proto/,
+            # so we never see the root proto/ itself and don't need to skip it.
+            while IFS= read -r PROTO_DIR; do
+              PLUGIN=$(basename "$PROTO_DIR")
               RPCPROTO="$ROOT/rpcproto/$PLUGIN"
 
-              # Check if rpcproto folder is missing or empty
               if [[ ! -d "$RPCPROTO" ]] || [[ -z "$(ls -A "$RPCPROTO" 2>/dev/null)" ]]; then
-                echo "Will generate rpcproto for: $PROTO_PATH"
-                NEEDS_GEN="$NEEDS_GEN $PROTO_PATH"
+                echo "Will generate rpcproto for: $PROTO_DIR"
+                NEEDS_GEN="$NEEDS_GEN $PROTO_DIR"
               else
-                echo "Skipping $PROTO_PATH (rpcproto exists and is not empty)"
+                echo "Skipping $PROTO_DIR (rpcproto exists and is not empty)"
               fi
-
-            done < <(find "$ROOT/proto" -type d)
+            done < <(find "$ROOT/proto" -mindepth 1 -maxdepth 1 -type d)
           done
 
-          if [[ -z "$NEEDS_GEN" ]]; then
+          # Trim whitespace before testing emptiness
+          NEEDS_GEN_TRIMMED="${NEEDS_GEN// /}"
+          if [[ -z "$NEEDS_GEN_TRIMMED" ]]; then
             echo "none" > proto_list.txt
-            echo "folders=none" >> $GITHUB_OUTPUT
+            echo "folders=none" >> "$GITHUB_OUTPUT"
           else
             echo "$NEEDS_GEN" > proto_list.txt
-            echo "folders=$NEEDS_GEN" >> $GITHUB_OUTPUT
+            echo "folders=$NEEDS_GEN" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Stop if no rpcproto generation is needed
