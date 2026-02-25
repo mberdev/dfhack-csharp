@@ -8,47 +8,38 @@ var host = "127.0.0.1";
 
 int port = 5000;
 
-Console.WriteLine($"Connecting to DFHack at '{host}:{port}' via gRPC...");
+Console.WriteLine($"Connecting to DFHack at '{host}:{port}'...");
 
-var channel = new Channel(host, port, ChannelCredentials.Insecure);
-var client = new HandshakeRpcService.HandshakeRpcServiceClient(channel);
-
-var request = new HandshakeRequest
-{
-    RequestMagic = "DFHack?\n",
-    ProtocolVersion = 1
-};
-
-Console.WriteLine("Sending handshake request...");
-
-HandshakeReply reply;
+DFHackCallInvoker invoker;
 try
 {
-    reply = client.Handshake(request);
-} catch (RpcException e)
+    invoker = DFHackCallInvoker.Connect(host, port);
+}
+catch (Exception ex)
 {
-    Console.WriteLine("gRPC call failed: " + e.Message);
+    Console.WriteLine("Connection or handshake failed: " + ex.Message);
     return;
 }
 
-Console.WriteLine("Received reply:");
-Console.WriteLine("  ResponseMagic: " + reply.ResponseMagic.Replace("\n", "\\n"));
-Console.WriteLine("  ProtocolVersion: " + reply.ProtocolVersion);
+Console.WriteLine("TCP handshake successful.");
 
-if (reply.ResponseMagic != "DFHack!\n")
+var basicApiClient = new BasicApiRpcService.BasicApiRpcServiceClient(invoker);
+var coreProtocolClient = new CoreProtocolRpcService.CoreProtocolRpcServiceClient(invoker);
+
+coreProtocolClient.CoreSuspend(new EmptyMessage(), deadline: DateTime.Now.AddSeconds(5));
+
+StringMessage reply;
+try
 {
-    Console.WriteLine("Unexpected response magic: " + reply.ResponseMagic.Replace("\n", "\\n"));
+    reply = basicApiClient.GetVersion(new EmptyMessage());
+}
+catch (RpcException e)
+{
+    Console.WriteLine("RPC call failed: " + e.Message);
+    invoker.Dispose();
     return;
 }
 
-if (reply.ProtocolVersion != 1)
-{
-    Console.WriteLine($"Unexpected protocol version: {reply.ProtocolVersion}");
-    return;
-}
+Console.WriteLine("DFHack version: " + reply.Value);
 
-Console.WriteLine("DFHack replied what we expected.");
-
-Console.WriteLine("\nThis example program successfully connected to DFHack via gRPC and it responded!");
-
-channel.ShutdownAsync().Wait();
+invoker.Dispose();
